@@ -72,4 +72,4 @@ The human points at a map (number or URL). A ticket is optional.
    - If a ticket sits past the destination, close it and add one line under **Out of scope** (gist, why, link). Leave it out of **Decisions so far**.
 5. Stop. One ticket per session.
 
-Starting to build means the map has reached its edge, or this ticket is not a decision. Do not implement the destination here.
+Starting to build means the map has reached its edge, or this ticket is not a decision. Do not implement the destination here. When no open decision remains, tell the human to run `to-tickets` to cut the destination into implementation tickets.
