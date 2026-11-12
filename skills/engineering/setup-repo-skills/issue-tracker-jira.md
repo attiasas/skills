@@ -11,7 +11,7 @@ Search, create, read, and close issues in project KEY on SITE through the Jira U
 
 Do not use `gh` for issues. Do not invent a CLI. If the user names a specific command or tool, replace this section with those steps.
 
-Do not guess the project key, an assignee, or a priority. Ask when any of those is missing.
+Do not guess the project key, an assignee, a priority, or a label. Ask when any of those is missing. A triage label the human approved on the draft is applied under "apply a triage label" below. A triage type is a label, not the Jira issue type.
 
 ## Body
 
@@ -50,3 +50,7 @@ A ticket can start when every blocker is done.
 ## When a skill says "attach as a child"
 
 Set the source issue as the parent in the Jira UI when this issue type allows a parent. If it does not, say so and put the parent key on the first line of the description. Do not guess an issue type. Do not change the parent's description. Do not close the parent.
+
+## When a skill says "apply a triage label"
+
+Set only the strings that `.agent-repo-config/triage-label.md` maps and the human approved on the draft. Set them in the Jira UI. Do not invent a CLI. Do not create a label. Skip a role whose Tracker label cell is empty.

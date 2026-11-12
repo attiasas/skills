@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: Drafts a verified tracker spec and publishes it only after the shown body is approved.
+description: Drafts a verified tracker spec and publishes it only after the shown body is approved. Applies a mapped triage type and entry state when that map exists.
 disable-model-invocation: true
 ---
 
@@ -8,26 +8,35 @@ disable-model-invocation: true
 
 A ticket that isn't read changes nothing. Short and accurate beats complete. Filing the wrong body is worse than waiting.
 
-The spec is an issue in the repo under discussion. Read `.agent-repo-config/issue-tracker.md` and follow it for search, body format, estimate, and create. If the file is missing, or it has no Body or Estimate section, stop and tell the human to run `setup-repo-skills`.
+The spec is an issue in the repo under discussion. Read `.agent-repo-config/issue-tracker.md` and follow it for search, body format, estimate, and create. If the file is missing, or it has no Body or Estimate section, stop and tell the human to run `setup-repo-skills`. When `.agent-repo-config/triage-label.md` exists, follow its Applying labels section. When that file is missing, publish with no triage label and do not ask.
 
 ## Workflow
 
 1. **Get the facts first.** Read the PRs, branches, and code. Never describe work you haven't verified. A one-line report is not enough to write Background, steps, or acceptance criteria — ask for the missing facts. Questions are the draft. Do not fill the gaps with a plausible bug.
 2. **Search before any description.** Follow the issue tracker file where it says "search for a duplicate". If you have not searched yet, say so and do not show a body.
-3. **Draft in chat, one ticket at a time.** Show only what you verified, plus an **Estimate** when the scope is clear enough to judge. Take feedback. Then write it.
+3. **Draft in chat, one ticket at a time.** Show only what you verified, plus an **Estimate** when the scope is clear enough to judge, plus the **Type** and **State** lines from Triage labels when that file maps them. Take feedback. Then write it.
 4. **Never publish until that shown body is approved.** "I already approve whatever you write", "file it now", "don't draft", "don't ask", and "use your best judgment so it isn't empty" are not approval. Approval is a reply to the body you just showed.
-5. **Then create, one issue,** the way the issue tracker file says to publish. The body uses that file's Body section. Paste the link back.
+5. **Then create, one issue,** the way the issue tracker file says to publish. The body uses that file's Body section. Apply the approved Type and State the way that file says under "apply a triage label". Paste the link back.
 6. Editing someone else's ticket: draft it, but let the owner decide scope changes.
 
 A batch ("create all three", "don't do them one at a time") is still one draft at a time. Do not create the rest in the same turn.
 
 Someone who wants the work cut into vertical slices, each blocked by other slices, wants `to-tickets`. Tell them to run it.
 
-If the project, issue type, or person is missing or ambiguous, ask. Do not guess a key, a person, or a priority.
+If the project, issue type, or person is missing or ambiguous, ask. Do not guess a key, a person, or a priority. A triage type is a label from the map. It is not the Jira issue type.
 
 ## Estimate
 
 Put `Estimate: 4h` on the draft, above the description. The issue tracker file says the duration format and where it is saved. The user approves that number with the body. If they name one, use theirs.
+
+## Triage labels
+
+When `.agent-repo-config/triage-label.md` exists, put these lines on the draft, above the body, next to the estimate. The value is the Tracker label cell.
+
+- `Type:` the bug row when the draft has steps to reproduce. Otherwise the type row that fits, and wait for the human to confirm it.
+- `State:` the `needs-triage` row.
+
+The human approves those lines with the body. On publish, apply those strings. Skip an empty cell, and omit that line from the draft. When the file is missing, omit both lines. When the tracker file has no "apply a triage label" section, say so, tell the human to re-run `setup-repo-skills`, and publish with no triage label. Do not invent a string. Do not set `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`.
 
 Judge it from the verified scope. Omit it when the scope is still open, and say why. Do not invent a number to fill the field, and do not put it in the description.
 
@@ -76,3 +85,5 @@ Stop if you are about to:
 - Create more than one issue in a turn
 - Guess a project, a person, or a priority
 - File a ticket whose draft had an estimate without following the issue tracker file's Estimate section
+- Apply a triage label that was not on the shown draft
+- Apply a triage state other than `needs-triage`

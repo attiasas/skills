@@ -1,6 +1,6 @@
 ---
 name: to-tickets
-description: Break a plan, spec, or conversation into vertical-slice tickets with blocking edges, and publish them after the breakdown is approved.
+description: Break a plan, spec, or conversation into vertical-slice tickets with blocking edges, and publish them after the breakdown is approved. Applies a mapped triage type and entry state when that map exists.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Cut the work into vertical slices. Each ticket is one narrow path a person can demo or check, and each ticket names the other tickets that block it. Publish only the breakdown the human has approved.
 
-The tickets are issues in the repo under discussion. Read `.agent-repo-config/issue-tracker.md` and follow it for search, body format, publish, blocking edges, and child issues. If that file is missing, or it has no Body section, stop and tell the human to run `setup-repo-skills`. A file that has no "record a blocking edge" or "attach as a child" section still works: the fallback below covers it. Re-run `setup-repo-skills` when they want those native steps.
+The tickets are issues in the repo under discussion. Read `.agent-repo-config/issue-tracker.md` and follow it for search, body format, publish, blocking edges, and child issues. If that file is missing, or it has no Body section, stop and tell the human to run `setup-repo-skills`. A file that has no "record a blocking edge" or "attach as a child" section still works: the fallback below covers it. Re-run `setup-repo-skills` when they want those native steps. When `.agent-repo-config/triage-label.md` exists, each slice names its Type and State from that file's Applying labels section, and publish applies those strings. When that file is missing, leave labels off and do not ask. When the tracker file has no "apply a triage label" section, say so, tell the human to re-run `setup-repo-skills`, and publish with no triage label.
 
 One verified spec is `to-spec`. An effort that is still undecided questions is `wayfinder`. Tell the human to run that skill. Do not start it yourself.
 
@@ -47,13 +47,15 @@ Search each title the way the tracker file says under "search for a duplicate" b
 Show a numbered list, blockers first. For each ticket:
 
 - **Title**
+- **Type**: the Tracker label from `.agent-repo-config/triage-label.md` for the one type row that fits, when that file maps one. Omit the line when the file is missing or the cell is empty.
+- **State**: the `needs-triage` Tracker label, when that cell is filled. Omit the line otherwise.
 - **Blocked by**: numbers from this list, or none
 - **What to build**: the end-to-end behaviour, in one or two sentences
 - **Acceptance criteria**: two or three checkable outcomes
 
 Ask whether the size is right, whether each edge is a real gate, and whether any ticket should be merged or split. Apply the edit and show the list again.
 
-Publish the list they replied to. "I already approve whatever you write", "file them now", or "use your best judgment", said before that list was shown, is not approval. A reply to the list you just showed is approval. Change a title, an edge, or a criterion after that reply, and show the list again.
+Publish the list they replied to. "I already approve whatever you write", "file them now", or "use your best judgment", said before that list was shown, is not approval. A reply to the list you just showed is approval. Change a title, an edge, a criterion, a type, or a state after that reply, and show the list again.
 
 ## Publish
 
@@ -62,7 +64,7 @@ Search again when a title changed since the last search. Then create one issue p
 - **Blocked by.** Follow "record a blocking edge" when that section exists, and leave this section out of the body. When the section is missing, or the native edge fails, include it: the blocking issues, or "None (can start immediately)". Say so when a native edge was not saved.
 - **Parent.** Only when the source was an existing issue. Follow "attach as a child" when that section exists. When it is missing, or the attach fails, name the parent on the first line of the body and say the child link was not saved. Leave the parent open. Leave its body as it was.
 
-Add nothing the approved list did not contain: no label, assignee, estimate, path, or extra criterion, unless the tracker file itself requires it.
+Apply the approved Type and State the way the tracker file says under "apply a triage label". Add nothing else the approved list did not contain: no other label, no assignee, no estimate, no path, and no extra criterion. Do not set `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`.
 
 Paste the links back. Name the tickets that can start now (every blocker done). On a straight chain, that is the first ticket. Stop. Implement only when the human asks.
 
@@ -72,7 +74,7 @@ Paste the links back. Name the tickets that can start now (every blocker done). 
 - Don't file one layer at a time (schema, then API, then UI), except the add / move / remove sequence above.
 - Don't publish a breakdown the human has not replied to.
 - Don't close or rewrite a parent issue.
-- Don't guess a project, a person, a priority, or a label.
+- Don't guess a project, a person, a priority, or a label string. The Type and State on the approved list are the labels publish applies.
 
 ## Red flags
 
@@ -84,3 +86,5 @@ Stop if you are about to:
 - Force a whole-codebase rename or retype into one slice
 - Add acceptance criteria after approval
 - Edit or close the parent
+- Apply a triage label that was not on the shown list
+- Apply a triage state other than `needs-triage`

@@ -12,7 +12,7 @@ Issues for this repo are GitHub issues. Use the `gh` CLI from inside the clone. 
 - Edit the body: `gh issue edit NUMBER --body "..."`
 - Close: `gh issue comment NUMBER --body "..."`, then `gh issue close NUMBER`
 
-Do not guess an assignee or a label the user did not name.
+Do not guess an assignee or a label the user did not name. A triage label the human approved on the draft is applied under "apply a triage label" below.
 
 ## Body
 
@@ -47,3 +47,9 @@ A ticket can start when every blocker is closed.
 `gh issue create --parent PARENT`, or `gh issue edit CHILD --parent PARENT`.
 
 If `gh` does not recognize the flag, the child body starts with `Part of #PARENT`. Do not invent an API call. Do not change the parent's body. Do not close the parent.
+
+## When a skill says "apply a triage label"
+
+Add only the strings that `.agent-repo-config/triage-label.md` maps and the human approved on the draft. On create, repeat `--label "name"` once per string. On an existing issue, `gh issue edit NUMBER --add-label "name"`.
+
+Do not create a label. Skip a role whose Tracker label cell is empty. Quote a name that contains spaces.
