@@ -30,6 +30,6 @@ On the draft, above the body:
 - `Type:` the Tracker label of the one type row that fits
 - `State:` the Tracker label of `needs-triage`
 
-`to-spec` uses the bug row when the draft has steps to reproduce. Otherwise the human confirms the type. `to-tickets` names the type on each slice. `wayfinder` shows State only.
+`to-spec` uses the bug row when the draft has steps to reproduce. Otherwise the human confirms the type. `to-tickets` names the type on each slice. `wayfinder` shows State only, and only on a tracker export.
 
 The human approves the lines with the draft. Publish applies those strings the way `.agent-repo-config/issue-tracker.md` says under "apply a triage label". Skip an empty cell. Apply no string that is not in this file. A triage type is a label. It is not a Jira issue type.

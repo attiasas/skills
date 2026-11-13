@@ -41,6 +41,12 @@ Create a Jira issue in project KEY. The description is wiki markup.
 
 Open that issue in project KEY on SITE.
 
+## When a skill says "fetch the task graph"
+
+Open the issue in project KEY on SITE. Read its comments, its child issues, and each "is blocked by" link. A ticket can start when every blocker is done. An issue with no children is one ticket.
+
+Do not invent a CLI.
+
 ## When a skill says "record a blocking edge"
 
 In the Jira UI, add an issue link on the new issue: "is blocked by" each blocker. If that link type is missing, say so. The description's Blocked by section is then the edge. Do not invent a CLI.
@@ -50,6 +56,10 @@ A ticket can start when every blocker is done.
 ## When a skill says "attach as a child"
 
 Set the source issue as the parent in the Jira UI when this issue type allows a parent. If it does not, say so and put the parent key on the first line of the description. Do not guess an issue type. Do not change the parent's description. Do not close the parent.
+
+## When a skill says "record progress"
+
+Add a comment in the Jira UI. Leave the description, the status, and the labels as they are. Do not invent a CLI.
 
 ## When a skill says "apply a triage label"
 

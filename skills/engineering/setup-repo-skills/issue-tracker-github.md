@@ -34,6 +34,14 @@ Create a GitHub issue. The description is Markdown.
 
 Read it with `gh issue view`.
 
+## When a skill says "fetch the task graph"
+
+Read the issue with `gh issue view NUMBER --json number,title,state,body,comments,parent,subIssues,blockedBy,blocking`.
+
+`subIssues` are the child tickets. `blockedBy` are the blockers. A ticket can start when every blocker is closed. When a blocker's state is missing from that payload, fetch it with "fetch the relevant ticket". An issue with no `subIssues` is one ticket.
+
+If `gh` does not recognize a field, say so. Use a `Part of #PARENT` line and a Blocked by section in the bodies. Do not invent an API call.
+
 ## When a skill says "record a blocking edge"
 
 Native issue dependency. On create: `gh issue create --blocked-by NUMBER`. After create: `gh issue edit CHILD --add-blocked-by BLOCKER`. Numbers or URLs both work. Repeat for each blocker.
@@ -47,6 +55,10 @@ A ticket can start when every blocker is closed.
 `gh issue create --parent PARENT`, or `gh issue edit CHILD --parent PARENT`.
 
 If `gh` does not recognize the flag, the child body starts with `Part of #PARENT`. Do not invent an API call. Do not change the parent's body. Do not close the parent.
+
+## When a skill says "record progress"
+
+Comment with `gh issue comment NUMBER --body "..."`. Leave the body, the state, and the labels as they are.
 
 ## When a skill says "apply a triage label"
 

@@ -10,7 +10,7 @@ Cut the work into vertical slices. Each ticket is one narrow path a person can d
 
 The tickets are issues in the repo under discussion. Read `.agent-repo-config/issue-tracker.md` and follow it for search, body format, publish, blocking edges, and child issues. If that file is missing, or it has no Body section, stop and tell the human to run `setup-repo-skills`. A file that has no "record a blocking edge" or "attach as a child" section still works: the fallback below covers it. Re-run `setup-repo-skills` when they want those native steps. When `.agent-repo-config/triage-label.md` exists, each slice names its Type and State from that file's Applying labels section, and publish applies those strings. When that file is missing, leave labels off and do not ask. When the tracker file has no "apply a triage label" section, say so, tell the human to re-run `setup-repo-skills`, and publish with no triage label.
 
-One verified spec is `to-spec`. An effort that is still undecided questions is `wayfinder`. Tell the human to run that skill. Do not start it yourself.
+One verified spec is `to-spec`. An effort that is still undecided questions is `wayfinder`. Tell the human to run that skill. Do not start it yourself. A wayfinder map is input: an issue titled `Map:`, or a file with Destination and Open. Decisions so far are settled. Each recommendation is the working answer for that question. An open question with no recommendation is still undecided.
 
 ## Gather
 

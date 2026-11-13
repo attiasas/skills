@@ -8,12 +8,12 @@ disable-model-invocation: true
 
 Scaffold the per-repo configuration that the engineering skills assume.
 
-- **Issue tracker**: where issues live (GitHub issues or Jira), how to search, how a body is written, where an estimate goes, how a blocking edge is recorded, and how a child issue is attached
+- **Issue tracker**: where issues live (GitHub issues or Jira), how to search, how a body is written, where an estimate goes, how a blocking edge is recorded, how a child issue is attached, and how progress is recorded
 - **Triage labels**: which existing label strings mean the five states and the types this repo actually uses
 
 This is a prompt-driven skill, not a deterministic script. Explore, present what you found, confirm with the user, then write.
 
-Invoke it when you want that config ready before another engineering skill reads it. `to-spec`, `wayfinder`, and `to-tickets` read `.agent-repo-config/issue-tracker.md`. When `.agent-repo-config/triage-label.md` exists, they also read that.
+Invoke it when you want that config ready before another engineering skill reads it. `to-spec`, `to-tickets`, and `implement-spec` read `.agent-repo-config/issue-tracker.md`. `wayfinder` reads it when the map is exported to the tracker. When `.agent-repo-config/triage-label.md` exists, `to-spec`, `wayfinder`, and `to-tickets` also read that.
 
 The config is local to the repo being set up. Write it under `.agent-repo-config/` and keep that directory gitignored. Do not commit it, and do not copy it into `docs/` or a steering file.
 
@@ -24,7 +24,7 @@ The config is local to the repo being set up. Write it under `.agent-repo-config
 Look at the current repo. Read whatever exists. Don't assume.
 
 - `git remote -v`: is `origin` a GitHub repo? Which one?
-- `.agent-repo-config/issue-tracker.md`: does this skill's output already exist? If it does, note any seed section it lacks (Body, Estimate, search, blocking edge, child issue, triage label).
+- `.agent-repo-config/issue-tracker.md`: does this skill's output already exist? If it does, note any seed section it lacks (Body, Estimate, search, blocking edge, child issue, triage label, task graph, record progress).
 - `.agent-repo-config/triage-label.md`: does a map already exist? If it does, the map section is settled. Show it. Do not draft a replacement.
 - `.gitignore`: is `.agent-repo-config/` already ignored?
 - A Jira site or project key already written in the repo
@@ -40,7 +40,7 @@ Lead with the recommended answer so the user can accept it in a word. Skip a sec
 
 **Section A: Issue tracker.**
 
-> Explainer: The issue tracker is where issues live for this repo. Later engineering skills read `.agent-repo-config/issue-tracker.md` when they create, fetch, block, or attach a ticket. Pick the place you actually track work.
+> Explainer: The issue tracker is where issues live for this repo. Later engineering skills read `.agent-repo-config/issue-tracker.md` when they create, fetch, block, attach, or record progress on a ticket. Pick the place you actually track work.
 
 Recommend **GitHub issues** when `origin` is GitHub. The only choices are:
 
@@ -51,7 +51,7 @@ Anything else (GitLab, Linear, local markdown) is not a choice in this version. 
 
 **Section B: Triage labels.** Skip when `.agent-repo-config/triage-label.md` already exists.
 
-> Explainer: The map records label strings this repo already uses. It does not create labels. `to-spec` and `to-tickets` apply one type and the `needs-triage` string on a new issue. `wayfinder` applies `needs-triage` only. The other four states stay on the map for a later triage pass.
+> Explainer: The map records label strings this repo already uses. It does not create labels. `to-spec` and `to-tickets` apply one type and the `needs-triage` string on a new issue. `wayfinder` applies `needs-triage` only, and only on a tracker export. The other four states stay on the map for a later triage pass.
 
 When no label is used, say so. Ask whether to write a map. Recommend **no**. On no, write nothing.
 
@@ -77,7 +77,7 @@ Let them edit the draft before writing.
 
 Write only what they accepted.
 
-- `.agent-repo-config/issue-tracker.md`, from [issue-tracker-github.md](issue-tracker-github.md) or [issue-tracker-jira.md](issue-tracker-jira.md). For Jira, fill the site and project key. Keep the Body, Estimate, search, blocking-edge, child-issue, and triage-label notes from the seed. If they named a real command or tool, use that in the Commands section and leave the other sections as accepted. When the file already exists and they only accepted missing seed sections, add those sections and leave the rest of the file as it is.
+- `.agent-repo-config/issue-tracker.md`, from [issue-tracker-github.md](issue-tracker-github.md) or [issue-tracker-jira.md](issue-tracker-jira.md). For Jira, fill the site and project key. Keep the Body, Estimate, search, blocking-edge, child-issue, task-graph, record-progress, and triage-label notes from the seed. If they named a real command or tool, use that in the Commands section and leave the other sections as accepted. When the file already exists and they only accepted missing seed sections, add those sections and leave the rest of the file as it is.
 - `.agent-repo-config/triage-label.md`, from [triage-label.md](triage-label.md), with the accepted Tracker label cells, unused type rows removed, and extra used type rows added. Keep the Applying labels section. If the file already exists, do not overwrite it unless they asked to replace it in this session.
 - `.gitignore`: add `.agent-repo-config/` if it is missing. Do not add a second copy of it.
 
@@ -85,6 +85,6 @@ Leave every other file alone. In particular, do not create `docs/agents/`, and d
 
 ### 5. Done
 
-Tell the user the setup is complete. `to-spec`, `wayfinder`, and `to-tickets` read `.agent-repo-config/issue-tracker.md`, which is gitignored. When a triage map was written, they also read `.agent-repo-config/triage-label.md` and apply the type and entry state from it. When no map was written, those skills publish with no triage label.
+Tell the user the setup is complete. `to-spec`, `to-tickets`, and `implement-spec` read `.agent-repo-config/issue-tracker.md`, which is gitignored. `wayfinder` reads it when the map is exported to the tracker. When a triage map was written, `to-spec`, `wayfinder`, and `to-tickets` also read `.agent-repo-config/triage-label.md` and apply the type and entry state from it (`wayfinder` applies the entry state only, and only on a tracker export). When no map was written, those three publish with no triage label.
 
 They can edit either file directly. Re-run this skill to switch trackers, or to copy in seed sections the issue tracker file does not have yet. Starting over replaces the issue tracker file with the current seed. Re-running leaves an existing triage map in place. Say "replace the triage map" to draft a new one. Re-running also adds the gitignore line if it is missing.
