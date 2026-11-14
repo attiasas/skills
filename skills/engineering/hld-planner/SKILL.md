@@ -73,7 +73,15 @@ The plan holds:
 - **Risks and open questions.** What is still unknown, and who decides it. Include expert objections the chosen approach did not answer.
 - **Out of scope.** What this plan does not include.
 
-Present each section in chat as you draft it, and ask whether it looks right before moving to the next. On every edit, update `plan.html` and tell them to refresh. Do not write any other output format until the human approves the plan.
+Show the whole plan at once: write every section into `plan.html` before opening it, and point at the page rather than walking the sections in chat. On an edit, update `plan.html` and tell them to refresh. Do not write any other output format until the human approves the plan.
+
+The page opens fully expanded. A short section is an `h2`: a few sentences, a list of five items or fewer, or a table of three short rows.
+
+Wrap a longer section in `<details class="section" open>`, with the `h2` inside the `summary`. Use this for a long writeup, a decision table past three rows, more than one approach table, an approach table whose cells are full sentences, a long phase list, or a long risk list. Leave a short section as a plain `h2`.
+
+A single small diagram stays inline. When Design has more than one diagram, or a diagram has more than about eight nodes, wrap each diagram in `<details class="diagram" open>` and name it in the `summary`.
+
+In an approach table, the chosen row has `class="chosen"` and a `<span class="chosen-label">Chosen</span>` in the first cell. Put the experts who proposed it on the next line, in `<span class="who">`. Omit that line when no expert proposed it.
 
 ## 6. Produce the output
 

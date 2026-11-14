@@ -8,16 +8,68 @@
   mermaid.initialize({ startOnLoad: true });
 </script>
 <style>
-  body { font: 15px/1.55 -apple-system, system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+  :root { color-scheme: light dark; }
+  body {
+    font: 15px/1.55 -apple-system, system-ui, sans-serif;
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.25rem 3rem;
+    color: light-dark(#1c1c1c, #eceae4);
+    background: light-dark(#fff, #141414);
+  }
   h1 { margin-bottom: .2rem; }
-  .meta { color: #666; margin-bottom: 2rem; }
-  .status { display: inline-block; padding: .1rem .5rem; border-radius: 4px; background: #fff3cd; }
-  h2 { border-bottom: 1px solid #ddd; padding-bottom: .2rem; margin-top: 2rem; }
+  h2 { margin: 2rem 0 .4rem; font-size: 1.15rem; }
+  h3 { margin: 1.4rem 0 .3rem; font-size: 1rem; }
+  p, li { max-width: 75ch; }
+  .meta { color: light-dark(#5c5a55, #b3b0a8); margin-bottom: 1.5rem; }
+  .status, .chosen-label {
+    display: inline-block;
+    padding: 0 .4rem;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .status { background: light-dark(#fff4cc, #4a3b12); color: light-dark(#3d3420, #f3e2b0); }
   table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #ddd; padding: .4rem .6rem; text-align: left; vertical-align: top; }
-  th { background: #f6f6f6; }
-  .chosen { background: #e8f5e9; }
-  code { background: #f3f3f3; padding: 0 .25rem; border-radius: 3px; }
+  th, td {
+    border-bottom: 1px solid light-dark(#e2e0da, #343432);
+    padding: .45rem .6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    color: light-dark(#5c5a55, #b3b0a8);
+    background: light-dark(#fff, #141414);
+    position: sticky;
+    top: 0;
+  }
+  tr.chosen td { background: light-dark(#f3faf4, #15261c); }
+  .chosen-label {
+    background: light-dark(#e5f4e8, #1d3a26);
+    color: light-dark(#1d3a26, #d7f0df);
+    margin-left: .35rem;
+  }
+  .who { display: block; color: light-dark(#5c5a55, #b3b0a8); margin-top: .15rem; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .9em;
+    background: light-dark(#f3f1eb, #2a2a28);
+    padding: 0 .2rem;
+    border-radius: 3px;
+  }
+  pre.mermaid {
+    background: light-dark(#fafafa, #1c1c1c);
+    border: 1px solid light-dark(#e2e0da, #343432);
+    border-radius: 8px;
+    padding: .75rem;
+    overflow-x: auto;
+  }
+  details.section > summary,
+  details.diagram > summary { cursor: pointer; }
+  details.section > summary h2 { display: inline; margin: 0; }
+  details.section > summary { margin-top: 1.4rem; }
+  details.diagram { margin-top: .8rem; }
+  details.diagram > summary { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -36,15 +88,19 @@
   <tr><td></td><td></td><td></td></tr>
 </table>
 
-<!-- One table per design choice. Mark the chosen row with class="chosen". -->
+<!-- One table per design choice. The chosen row has class="chosen". -->
 <h3>Approaches: CHOICE</h3>
 <table>
   <tr><th>Approach</th><th>How it works</th><th>Cost</th><th>Risk</th></tr>
-  <tr class="chosen"><td></td><td></td><td></td><td></td></tr>
+  <tr class="chosen">
+    <td>NAME <span class="chosen-label">Chosen</span><span class="who">EXPERTS</span></td>
+    <td></td><td></td><td></td>
+  </tr>
   <tr><td></td><td></td><td></td><td></td></tr>
 </table>
 
 <h2>Design</h2>
+<p></p>
 <pre class="mermaid">
 flowchart LR
   A[Part] --> B[(Store)]
