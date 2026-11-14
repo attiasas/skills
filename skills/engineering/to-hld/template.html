@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HLD: FEATURE</title>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "loose" });
+</script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: light-dark(#1c1c1c, #eceae4);
+    --muted: light-dark(#5c5a55, #b3b0a8);
+    --bg: light-dark(#fbfaf7, #121212);
+    --panel: light-dark(#fff, #1b1b1a);
+    --line: light-dark(#e2e0da, #343432);
+    --accent: light-dark(#2f5bd3, #8aa8ff);
+    --new-bg: light-dark(#e5f4e8, #1d3a26);   --new-fg: light-dark(#1d5a2e, #bfe8cb);
+    --reuse-bg: light-dark(#eceae4, #2c2c2a); --reuse-fg: light-dark(#4a4842, #cfccc4);
+    --alter-bg: light-dark(#fff1d6, #4a3912); --alter-fg: light-dark(#7a5200, #f3dca6);
+    --risk-bg: light-dark(#fde8e8, #4a1f1f);  --risk-fg: light-dark(#8a1f1f, #f5c2c2);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  body { margin: 0; font: 16px/1.55 -apple-system, system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; }
+  :not(pre) > code { background: light-dark(#f3f1eb, #2a2a28); padding: 0 .25rem; border-radius: 3px; }
+
+  /* Navigation */
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); width: 0; z-index: 10; transition: width .2s; }
+  .rail { position: fixed; top: 50%; right: 1rem; transform: translateY(-50%); display: flex; flex-direction: column; gap: .35rem; z-index: 10; }
+  .rail a { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; text-decoration: none; color: var(--muted); font-size: 12px; }
+  .rail a span { opacity: 0; transition: opacity .15s; background: var(--panel); border: 1px solid var(--line); padding: 0 .4rem; border-radius: 4px; }
+  .rail a:hover span, .rail a.active span { opacity: 1; }
+  .rail a::after { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--muted); }
+  .rail a.active::after { background: var(--accent); border-color: var(--accent); }
+  .counter { position: fixed; bottom: .8rem; right: 1rem; font-size: 12px; color: var(--muted); z-index: 10; }
+
+  /* Slides */
+  .slide { min-height: 100vh; scroll-snap-align: start; padding: 4.5rem max(4rem, calc((100vw - 1200px) / 2)) 3rem; border-bottom: 1px solid var(--line); }
+  .slide-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: .4rem; }
+  .num { font: 700 2.4rem/1 ui-monospace, Menlo, monospace; color: var(--accent); }
+  h1 { font-size: 3rem; margin: 0 0 .5rem; line-height: 1.1; }
+  h2 { font-size: 2rem; margin: 0; }
+  h3 { font-size: 1.05rem; margin: 1.6rem 0 .5rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .lede { font-size: 1.15rem; color: var(--muted); max-width: 70ch; margin: .2rem 0 1.6rem; }
+  p, li { max-width: 75ch; }
+
+  /* Building blocks */
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .two { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.2rem; }
+  .card h4 { margin: 0 0 .3rem; font-size: 1rem; }
+  .metric { font: 700 2.2rem/1.1 -apple-system, system-ui, sans-serif; color: var(--accent); }
+  .metric small { font-size: .9rem; font-weight: 500; color: var(--muted); margin-left: .25rem; }
+  .callout { border-left: 4px solid var(--accent); background: var(--panel); padding: .8rem 1.1rem; border-radius: 0 8px 8px 0; margin-top: 1.4rem; font-size: 1.1rem; }
+  .callout.warn { border-color: var(--alter-fg); }
+  .pill { display: inline-block; font: 600 11px/1.6 ui-monospace, Menlo, monospace; padding: 0 .45rem; border-radius: 4px; letter-spacing: .03em; }
+  .pill.new { background: var(--new-bg); color: var(--new-fg); }
+  .pill.reuse { background: var(--reuse-bg); color: var(--reuse-fg); }
+  .pill.alter { background: var(--alter-bg); color: var(--alter-fg); }
+  .pill.risk { background: var(--risk-bg); color: var(--risk-fg); }
+  .pill.method { background: var(--accent); color: var(--panel); }
+  .status { background: var(--alter-bg); color: var(--alter-fg); }
+  .meta { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; color: var(--muted); margin-top: 1.5rem; }
+  .meta b { color: var(--fg); font-weight: 600; }
+  .agenda { columns: 2; padding-left: 1.2rem; margin-top: 2.5rem; font-size: 1.1rem; }
+  .agenda a { color: inherit; }
+  table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  th, td { border-bottom: 1px solid var(--line); padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: 0; }
+  tr.band td { background: light-dark(#f6f5f1, #222220); font-weight: 600; }
+  pre.mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; overflow-x: auto; text-align: center; margin: 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: .9rem; margin-top: .6rem; }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; border: 1px solid var(--line); }
+  .pane { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .pane > header { padding: .45rem .8rem; border-bottom: 1px solid var(--line); font-size: .85rem; color: var(--muted); display: flex; gap: .5rem; align-items: center; }
+  .pane pre { margin: 0; padding: .8rem 1rem; overflow-x: auto; }
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  .steps li { counter-increment: step; position: relative; padding: 0 0 1rem 2.6rem; }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--accent); color: var(--panel); font-weight: 700; display: grid; place-items: center; font-size: .9rem; }
+  .steps li:not(:last-child)::after { content: ""; position: absolute; left: .88rem; top: 1.9rem; bottom: .1rem; width: 2px; background: var(--line); }
+  .question .options { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: .6rem 0; }
+  .question .opt { border: 1px solid var(--line); border-radius: 8px; padding: .5rem .75rem; }
+  .question .opt.rec { border-color: var(--new-fg); background: var(--new-bg); }
+  .question .opt.rec::before { content: "Recommended"; display: block; font: 600 11px ui-monospace, Menlo, monospace; color: var(--new-fg); }
+  .who { color: var(--muted); font-size: .9rem; }
+
+  @media (max-width: 800px) { .two { grid-template-columns: 1fr; } .slide { padding: 3.5rem 1.2rem 2rem; } .rail { display: none; } }
+  @media print {
+    html { scroll-snap-type: none; }
+    .rail, .progress, .counter { display: none; }
+    .slide { min-height: auto; break-after: page; border: 0; padding: 1.5rem 2rem; }
+    .slide:last-of-type { break-after: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="progress"></div>
+<nav class="rail"></nav>
+<div class="counter"></div>
+
+<!-- Title slide -->
+<section class="slide" id="title" data-title="Overview">
+  <span class="pill status">STATUS</span>
+  <h1>HLD: FEATURE</h1>
+  <p class="lede">ONE-LINE GOAL FROM SECTION 01.</p>
+  <div class="meta">
+    <span>Author <b>AUTHOR</b></span>
+    <span>Date <b>DATE</b></span>
+    <span>Tickets <b>TICKETS</b></span>
+    <span>Source <b><code>hld-SLUG.md</code></b></span>
+  </div>
+  <ol class="agenda">
+    <li><a href="#s01">Why</a></li>
+    <li><a href="#s02">System diagram</a></li>
+    <li><a href="#s03">Sequence</a></li>
+    <li><a href="#s04">Schema &amp; ERD</a></li>
+    <li><a href="#s05">API usage</a></li>
+    <li><a href="#s06">NFR &amp; sizing</a></li>
+    <li><a href="#s07">Testing</a></li>
+    <li><a href="#questions">Open questions</a></li>
+  </ol>
+</section>
+
+<!-- 01 Why: one card per gap, the measured figure as the metric. No solution language. -->
+<section class="slide" id="s01" data-title="Why">
+  <div class="slide-head"><span class="num">01</span><h2>Why</h2></div>
+  <p class="lede">TODAY'S BEHAVIOUR, ONE SENTENCE.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="metric">VALUE<small>UNIT</small></div>
+      <h4>GAP</h4>
+      <p>WHAT THE FIGURE MEASURES.</p>
+    </div>
+  </div>
+  <div class="two" style="margin-top:1rem">
+    <div class="card"><h4>Who is blocked</h4><p>WHO, AND ON WHAT.</p></div>
+    <div class="card"><h4>Why now</h4><p>WHY THIS QUARTER.</p></div>
+  </div>
+  <div class="callout"><b>Goal:</b> GOAL.</div>
+</section>
+
+<!-- 02 System diagram: same mermaid as the md, plus the classDefs below to mark new/changed and external boxes. -->
+<section class="slide" id="s02" data-title="System diagram">
+  <div class="slide-head"><span class="num">02</span><h2>System diagram</h2></div>
+  <p class="lede">WHAT THIS FEATURE TOUCHES, IN ONE SENTENCE.</p>
+  <pre class="mermaid">
+flowchart LR
+  client[Client]
+  svc[owned-service]
+  store[(store)]
+  ext[external-service]
+  client -->|payload| svc
+  svc -->|reads/writes| store
+  svc -->|call| ext
+  classDef new fill:#e5f4e8,stroke:#1d5a2e,color:#1d5a2e
+  classDef changed fill:#fff1d6,stroke:#7a5200,color:#7a5200
+  classDef ext fill:#eceae4,stroke:#8a877f,color:#4a4842,stroke-dasharray:4 3
+  class svc new
+  class ext ext
+  </pre>
+  <div class="legend">
+    <span><i class="swatch" style="background:#e5f4e8"></i>New</span>
+    <span><i class="swatch" style="background:#fff1d6"></i>Changed</span>
+    <span><i class="swatch" style="background:#eceae4"></i>External or shared</span>
+  </div>
+</section>
+
+<!-- 03 Sequence -->
+<section class="slide" id="s03" data-title="Sequence">
+  <div class="slide-head"><span class="num">03</span><h2>Sequence</h2></div>
+  <p class="lede">Hot path: FLOW NAME.</p>
+  <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Client
+  participant svc as owned-service
+  Client->>svc: METHOD, BATCH SIZE
+  svc-->>Client: RESPONSE, BATCH SIZE
+  </pre>
+  <!-- One callout per short-circuit. -->
+  <div class="callout warn"><b>Short-circuit at step N:</b> CONDITION AND RESULT.</div>
+</section>
+
+<!-- 04 Schema & ERD: tag pill per table (new / reuse / alter); migration as numbered steps. -->
+<section class="slide" id="s04" data-title="Schema & ERD">
+  <div class="slide-head"><span class="num">04</span><h2>Schema &amp; ERD</h2></div>
+  <p class="lede">MIGRATION SURFACE, ONE SENTENCE (OR "NO DDL / NO BACKFILL").</p>
+  <div class="two">
+    <pre class="mermaid">
+erDiagram
+  TABLE_A ||--o{ TABLE_B : relation
+    </pre>
+    <table>
+      <tr><th>Table</th><th>Tag</th><th>Indexes, uniqueness, cascades</th></tr>
+      <tr><td><code>TABLE</code></td><td><span class="pill new">NEW</span></td><td></td></tr>
+    </table>
+  </div>
+  <div class="two">
+    <div>
+      <h3>Migration order</h3>
+      <ol class="steps">
+        <li><b>STEP</b><br><span class="who">Blocks: … · Rollback: …</span></li>
+      </ol>
+    </div>
+    <div>
+      <h3>Backfill</h3>
+      <div class="grid">
+        <div class="card"><div class="metric">ROWS</div><p>Backfill volume</p></div>
+        <div class="card"><div class="metric">DURATION</div><p>Run time</p></div>
+        <div class="card"><div class="metric">YES/NO</div><p>Online migration</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 API usage: request and response side by side, real values. -->
+<section class="slide" id="s05" data-title="API usage">
+  <div class="slide-head"><span class="num">05</span><h2>API usage</h2></div>
+  <p class="lede"><span class="pill method">METHOD</span> <code>/path</code> · CHANGED VS TODAY'S CONTRACT.</p>
+  <div class="two">
+    <div class="pane"><header>Request</header><pre>{}</pre></div>
+    <div class="pane"><header>Response <span class="pill new">200</span></header><pre>{}</pre></div>
+  </div>
+  <h3>Behaviour</h3>
+  <table>
+    <tr><th>Case</th><th>Result</th></tr>
+    <tr><td><span class="pill risk">4XX</span> TRIGGER</td><td></td></tr>
+    <tr><td>Partial success</td><td></td></tr>
+    <tr><td>Idempotency and ordering</td><td></td></tr>
+  </table>
+</section>
+
+<!-- 06 NFR & sizing: the 3-4 headline numbers as tiles, then the full table. -->
+<section class="slide" id="s06" data-title="NFR & sizing">
+  <div class="slide-head"><span class="num">06</span><h2>NFR &amp; sizing</h2></div>
+  <div class="grid">
+    <div class="card"><div class="metric">VALUE<small>UNIT</small></div><p>WHAT IT MEASURES</p></div>
+  </div>
+  <h3>Commitments</h3>
+  <table>
+    <tr><th>Dimension</th><th>Today</th><th>Target</th><th>Source of the number</th></tr>
+    <tr><td>Throughput</td><td></td><td><b></b></td><td></td></tr>
+    <tr><td>Peak concurrency</td><td></td><td><b></b></td><td></td></tr>
+    <tr><td>Latency p50 / p95 / p99</td><td></td><td><b></b></td><td></td></tr>
+    <tr><td>Data volume / growth</td><td></td><td><b></b></td><td></td></tr>
+    <tr><td>Availability / degraded mode</td><td></td><td><b></b></td><td></td></tr>
+  </table>
+</section>
+
+<!-- 07 Testing: one band row, then its cases. -->
+<section class="slide" id="s07" data-title="Testing">
+  <div class="slide-head"><span class="num">07</span><h2>Testing</h2></div>
+  <table>
+    <tr><th>Case</th><th>Defends</th><th>Pass criterion</th></tr>
+    <tr class="band"><td colspan="3">Completeness</td></tr>
+    <tr><td></td><td></td><td></td></tr>
+    <tr class="band"><td colspan="3">Edge cases</td></tr>
+    <tr><td></td><td></td><td></td></tr>
+    <tr class="band"><td colspan="3">Error handling</td></tr>
+    <tr><td></td><td></td><td></td></tr>
+    <tr class="band"><td colspan="3">Non-functional</td></tr>
+    <tr><td></td><td></td><td></td></tr>
+  </table>
+</section>
+
+<!-- Open questions: one card per decision; the recommended option gets class "rec". -->
+<section class="slide" id="questions" data-title="Open questions">
+  <div class="slide-head"><span class="num">?</span><h2>Open questions</h2></div>
+  <p class="lede">Decisions needed from the room.</p>
+  <div class="card question">
+    <h4>Q1: DECISION</h4>
+    <div class="options">
+      <div class="opt rec"><b>A</b>: OPTION</div>
+      <div class="opt"><b>B</b>: OPTION</div>
+    </div>
+    <span class="who">Needed from: ROLE</span>
+  </div>
+</section>
+
+<!-- Appendix: one slide per appendix in the md, id="appendix-N", data-title="Appendix: NAME". -->
+
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const rail = document.querySelector(".rail");
+  const counter = document.querySelector(".counter");
+  const progress = document.querySelector(".progress");
+  slides.forEach(s => {
+    const a = document.createElement("a");
+    a.href = "#" + s.id;
+    a.innerHTML = "<span>" + s.dataset.title + "</span>";
+    rail.append(a);
+  });
+  const links = [...rail.children];
+  let current = 0;
+  const mark = i => {
+    current = i;
+    links.forEach((a, j) => a.classList.toggle("active", j === i));
+    counter.textContent = (i + 1) + " / " + slides.length;
+    progress.style.width = ((i + 1) / slides.length * 100) + "%";
+  };
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) mark(slides.indexOf(e.target)); });
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  slides.forEach(s => observer.observe(s));
+  const go = i => slides[Math.max(0, Math.min(slides.length - 1, i))].scrollIntoView();
+  addEventListener("keydown", e => {
+    if (e.target.closest("input, textarea")) return;
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) { e.preventDefault(); go(current + 1); }
+    if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); go(current - 1); }
+    if (e.key === "Home") { e.preventDefault(); go(0); }
+    if (e.key === "End") { e.preventDefault(); go(slides.length - 1); }
+  });
+  mark(0);
+</script>
+</body>
+</html>

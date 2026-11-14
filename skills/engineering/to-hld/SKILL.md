@@ -1,6 +1,6 @@
 ---
 name: to-hld
-description: Produce a high-level design (HLD) file using the seven-section engineering design-review template. Use when the user asks for an HLD, high-level design, feature design review, DR deck/doc, or to write design-review sections (Why, system diagram, sequence, schema/ERD, API, NFR, testing, open questions).
+description: Produce a high-level design (HLD) file using the seven-section engineering design-review template, plus an HTML slide deck of it for the review. Use when the user asks for an HLD, high-level design, feature design review, DR deck/doc, or to write design-review sections (Why, system diagram, sequence, schema/ERD, API, NFR, testing, open questions).
 ---
 
 # Creating an HLD
@@ -17,8 +17,28 @@ Template rule: **one section is the floor, not the ceiling**. Split a section if
 4. Draw diagrams in mermaid. Keep **the same box names** in the system diagram, sequence diagram, schema, tests, and NFRs.
 5. Run the [Before you book the review](#before-you-book-the-review) checklist. Fix gaps before presenting the file.
 6. Put anything longer than a tight section in an **appendix** and link it — do not dump it into the main sections.
+7. Write the review deck next to the markdown, same name with `.html` (see [HTML review deck](#html-review-deck)). Open it for the user (`open <path>` on macOS) and give both paths.
 
-For a worked example, see [examples.md](examples.md). For a blank file skeleton, copy [template.md](template.md).
+For a worked example, see [examples.md](examples.md). For a blank file skeleton, copy [template.md](template.md). For the deck, copy [template.html](template.html).
+
+## HTML review deck
+
+The markdown is the source of truth. The deck is a view of it for the review: one full-screen slide per section, a side rail to jump between them, arrow keys and PageUp/PageDown to step, and one slide per page when printed.
+
+- Copy `template.html` and replace every UPPERCASE placeholder. Repeat a block (gap card, table row, migration step, question card) once per item; delete blocks the HLD has no content for, but keep every slide.
+- Carry the content over, do not summarise it away and do not add claims the markdown lacks. Shorten prose to fit a slide; tables, numbers, payloads and diagrams go over whole.
+- Map each section to its visual:
+  - 01 Why: one card per gap, its measured figure as the metric. Goal in the callout.
+  - 02 System diagram: the same mermaid, plus `class <id> new|changed|ext` lines using the template's `classDef`s, so the legend matches the boxes.
+  - 03 Sequence: the same mermaid; one warning callout per short-circuit.
+  - 04 Schema & ERD: one `pill new|reuse|alter` per table; migration order as `.steps`, with blocking and rollback under each step.
+  - 05 API usage: request and response panes side by side; errors, partial success and idempotency in the behaviour table.
+  - 06 NFR & sizing: the headline numbers as tiles, then the full table.
+  - 07 Testing: one band row per band, its cases under it.
+  - Open questions: one card per question; the recommended option gets class `rec`.
+  - Appendices: one extra slide each, after open questions.
+- Escape `<`, `>` and `&` in payloads and table text. Mermaid blocks keep the markdown's source verbatim.
+- When the markdown changes, regenerate the deck so the two never disagree.
 
 ## File shape
 
@@ -219,3 +239,4 @@ Decisions you want from the room. Write each as a **decision with options**, not
 - [ ] Every test row names the claim it defends and its pass criterion.
 - [ ] Open questions are written as decisions with options, not as unfinished work.
 - [ ] Anything longer than a section lives in an appendix that is linked, not inlined as the main read.
+- [ ] The HTML deck exists beside the markdown, has every slide, and matches the markdown's current content.
