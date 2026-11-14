@@ -8,117 +8,349 @@
   mermaid.initialize({ startOnLoad: true });
 </script>
 <style>
-  :root { color-scheme: light dark; }
-  body {
-    font: 15px/1.55 -apple-system, system-ui, sans-serif;
-    max-width: 1100px;
-    margin: 2rem auto;
-    padding: 0 1.25rem 3rem;
-    color: light-dark(#1c1c1c, #eceae4);
-    background: light-dark(#fff, #141414);
+  :root {
+    color-scheme: light dark;
+    --fg: light-dark(#1c1c1c, #eceae4);
+    --muted: light-dark(#5c5a55, #b3b0a8);
+    --bg: light-dark(#fbfaf7, #121212);
+    --panel: light-dark(#fff, #1b1b1a);
+    --line: light-dark(#e2e0da, #343432);
+    --accent: light-dark(#2f5bd3, #8aa8ff);
+    --new-bg: light-dark(#e5f4e8, #1d3a26); --new-fg: light-dark(#1d5a2e, #bfe8cb);
+    --alter-bg: light-dark(#fff1d6, #4a3912); --alter-fg: light-dark(#7a5200, #f3dca6);
   }
-  h1 { margin-bottom: .2rem; }
-  h2 { margin: 2rem 0 .4rem; font-size: 1.15rem; }
-  h3 { margin: 1.4rem 0 .3rem; font-size: 1rem; }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  body { margin: 0; font: 16px/1.55 -apple-system, system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; }
+  :not(pre) > code { background: light-dark(#f3f1eb, #2a2a28); padding: 0 .25rem; border-radius: 3px; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); width: 0; z-index: 10; transition: width .2s; }
+  .rail { position: fixed; top: 50%; right: 1rem; transform: translateY(-50%); display: flex; flex-direction: column; gap: .35rem; z-index: 10; }
+  .rail a { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; text-decoration: none; color: var(--muted); font-size: 12px; }
+  .rail a span { opacity: 0; transition: opacity .15s; background: var(--panel); border: 1px solid var(--line); padding: 0 .4rem; border-radius: 4px; white-space: nowrap; }
+  .rail a:hover span, .rail a.active span, .rail a:focus-visible span { opacity: 1; }
+  .rail a::after { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--muted); }
+  .rail a.active::after { background: var(--accent); border-color: var(--accent); }
+  .rail a.has-note::after { border-color: var(--alter-fg); background: var(--alter-bg); }
+  .rail a.active.has-note::after { background: var(--alter-fg); border-color: var(--alter-fg); }
+  .counter { position: fixed; bottom: .8rem; right: 1rem; font-size: 12px; color: var(--muted); z-index: 10; }
+  .dock {
+    position: fixed; left: 1rem; bottom: .7rem; z-index: 10;
+    display: flex; align-items: center; gap: .4rem;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+    padding: .3rem .35rem .3rem .85rem;
+  }
+  .dock-count { color: var(--muted); font-size: 13px; margin-right: .35rem; }
+  .dock button {
+    font: 600 13px/1.4 -apple-system, system-ui, sans-serif;
+    border-radius: 999px; padding: .28rem .75rem; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--fg);
+  }
+  .dock .review-copy { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+  .dock-note { position: fixed; left: 1rem; bottom: 3.1rem; margin: 0; font-size: 13px; color: var(--muted); z-index: 10; }
+  .slide { min-height: 100vh; scroll-snap-align: start; padding: 4.5rem max(4rem, calc((100vw - 1100px) / 2)) 5.5rem; border-bottom: 1px solid var(--line); }
+  .slide-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: .4rem; }
+  .num { font: 700 2.4rem/1 ui-monospace, Menlo, monospace; color: var(--accent); }
+  h1 { font-size: 3rem; margin: 0 0 .5rem; line-height: 1.1; }
+  h2 { font-size: 2rem; margin: 0; }
+  h3 { font-size: 1.05rem; margin: 1.6rem 0 .5rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   p, li { max-width: 75ch; }
-  .meta { color: light-dark(#5c5a55, #b3b0a8); margin-bottom: 1.5rem; }
-  .status, .chosen-label {
-    display: inline-block;
-    padding: 0 .4rem;
-    border-radius: 4px;
-    font-size: 12px;
+  .pill { display: inline-block; font: 600 11px/1.6 ui-monospace, Menlo, monospace; padding: 0 .45rem; border-radius: 4px; letter-spacing: .03em; }
+  .status { background: var(--alter-bg); color: var(--alter-fg); }
+  .chosen-label { background: var(--new-bg); color: var(--new-fg); }
+  .meta { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; color: var(--muted); margin-top: 1.5rem; }
+  .meta b { color: var(--fg); font-weight: 600; }
+  .agenda { columns: 2; padding-left: 1.2rem; margin-top: 2.5rem; font-size: 1.1rem; }
+  .agenda a { color: inherit; }
+  table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  th, td { border-bottom: 1px solid var(--line); padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: 0; }
+  tr.chosen td { background: var(--new-bg); }
+  .who { display: block; color: var(--muted); font-size: .9rem; margin-top: .15rem; }
+  pre.mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; overflow-x: auto; text-align: center; margin: 1rem 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.2rem; }
+  .comment-card { margin-top: 1.6rem; max-width: 75ch; }
+  .comment-card label, .note-row label { display: block; color: var(--muted); font-size: .9rem; }
+  textarea {
+    display: block; width: 100%; margin-top: .35rem; font: inherit; line-height: 1.45;
+    color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .5rem .7rem;
   }
-  .status { background: light-dark(#fff4cc, #4a3b12); color: light-dark(#3d3420, #f3e2b0); }
-  table { border-collapse: collapse; width: 100%; }
-  th, td {
-    border-bottom: 1px solid light-dark(#e2e0da, #343432);
-    padding: .45rem .6rem;
-    text-align: left;
-    vertical-align: top;
+  .note-cell { width: 1%; white-space: nowrap; }
+  .note-toggle {
+    font: 600 11px/1.6 ui-monospace, Menlo, monospace; letter-spacing: .03em;
+    border: 1px solid var(--line); background: transparent; color: var(--muted);
+    border-radius: 4px; padding: 0 .45rem; cursor: pointer;
   }
-  th {
-    font-weight: 600;
-    color: light-dark(#5c5a55, #b3b0a8);
-    background: light-dark(#fff, #141414);
-    position: sticky;
-    top: 0;
+  .note-toggle[aria-expanded="true"], .note-toggle.has-note { background: var(--alter-bg); color: var(--alter-fg); border-color: transparent; }
+  .note-row td { background: light-dark(#f6f5f1, #222220); }
+  @media (max-width: 800px) {
+    .slide { padding: 3.5rem 1.2rem 5.5rem; }
+    .rail { display: none; }
+    .agenda { columns: 1; }
   }
-  tr.chosen td { background: light-dark(#f3faf4, #15261c); }
-  .chosen-label {
-    background: light-dark(#e5f4e8, #1d3a26);
-    color: light-dark(#1d3a26, #d7f0df);
-    margin-left: .35rem;
+  @media print {
+    html { scroll-snap-type: none; }
+    .rail, .progress, .counter, .dock, .dock-note, .comment-card, .note-cell, .note-row { display: none; }
+    .slide { min-height: auto; break-after: page; border: 0; padding: 1.5rem 2rem; }
   }
-  .who { display: block; color: light-dark(#5c5a55, #b3b0a8); margin-top: .15rem; }
-  code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .9em;
-    background: light-dark(#f3f1eb, #2a2a28);
-    padding: 0 .2rem;
-    border-radius: 3px;
-  }
-  pre.mermaid {
-    background: light-dark(#fafafa, #1c1c1c);
-    border: 1px solid light-dark(#e2e0da, #343432);
-    border-radius: 8px;
-    padding: .75rem;
-    overflow-x: auto;
-  }
-  details.section > summary,
-  details.diagram > summary { cursor: pointer; }
-  details.section > summary h2 { display: inline; margin: 0; }
-  details.section > summary { margin-top: 1.4rem; }
-  details.diagram { margin-top: .8rem; }
-  details.diagram > summary { font-weight: 600; }
 </style>
 </head>
 <body>
-<h1>Plan: TITLE</h1>
-<div class="meta"><span class="status">Draft, awaiting review</span> · DATE</div>
+<div class="progress"></div>
+<nav class="rail" aria-label="Sections"></nav>
+<div class="counter"></div>
+<div class="dock">
+  <span class="dock-count">No comments</span>
+  <button type="button" class="review-copy">Copy</button>
+</div>
+<p class="dock-note"></p>
 
-<h2>Goal</h2>
-<p></p>
+<section class="slide" id="overview" data-title="Overview">
+  <span class="pill status">Draft, awaiting review</span>
+  <h1>Plan: TITLE</h1>
+  <div class="meta"><span>Date <b>DATE</b></span></div>
+  <ol class="agenda">
+    <li><a href="#goal">Goal</a></li>
+    <li><a href="#context">Context</a></li>
+    <li><a href="#decisions">Decisions</a></li>
+    <li><a href="#approaches">Approaches</a></li>
+    <li><a href="#design">Design</a></li>
+    <li><a href="#phases">Phases</a></li>
+    <li><a href="#risks">Risks and open questions</a></li>
+    <li><a href="#out-of-scope">Out of scope</a></li>
+  </ol>
+</section>
 
-<h2>Context</h2>
-<p></p>
+<section class="slide" id="goal" data-title="Goal">
+  <div class="slide-head"><span class="num">01</span><h2>Goal</h2></div>
+  <p></p>
+</section>
 
-<h2>Decisions</h2>
-<table>
-  <tr><th>Question</th><th>Answer</th><th>Trade-off accepted</th></tr>
-  <tr><td></td><td></td><td></td></tr>
-</table>
+<section class="slide" id="context" data-title="Context">
+  <div class="slide-head"><span class="num">02</span><h2>Context</h2></div>
+  <p></p>
+</section>
 
-<!-- One table per design choice. The chosen row has class="chosen". -->
-<h3>Approaches: CHOICE</h3>
-<table>
-  <tr><th>Approach</th><th>How it works</th><th>Cost</th><th>Risk</th></tr>
-  <tr class="chosen">
-    <td>NAME <span class="chosen-label">Chosen</span><span class="who">EXPERTS</span></td>
-    <td></td><td></td><td></td>
-  </tr>
-  <tr><td></td><td></td><td></td><td></td></tr>
-</table>
+<section class="slide" id="decisions" data-title="Decisions">
+  <div class="slide-head"><span class="num">03</span><h2>Decisions</h2></div>
+  <table>
+    <tr><th>Question</th><th>Answer</th><th>Trade-off accepted</th></tr>
+    <tr><td></td><td></td><td></td></tr>
+  </table>
+</section>
 
-<h2>Design</h2>
-<p></p>
-<pre class="mermaid">
+<section class="slide" id="approaches" data-title="Approaches">
+  <div class="slide-head"><span class="num">04</span><h2>Approaches: CHOICE</h2></div>
+  <table>
+    <tr><th>Approach</th><th>How it works</th><th>Cost</th><th>Risk</th></tr>
+    <tr class="chosen"><td>NAME <span class="chosen-label">Chosen</span><span class="who">EXPERTS</span></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </table>
+</section>
+
+<section class="slide" id="design" data-title="Design">
+  <div class="slide-head"><span class="num">05</span><h2>Design</h2></div>
+  <pre class="mermaid">
 flowchart LR
   A[Part] --> B[(Store)]
 </pre>
+</section>
 
-<h2>Phases</h2>
-<ol>
-  <li></li>
-</ol>
+<section class="slide" id="phases" data-title="Phases">
+  <div class="slide-head"><span class="num">06</span><h2>Phases</h2></div>
+  <ol>
+    <li></li>
+  </ol>
+</section>
 
-<h2>Risks and open questions</h2>
-<ul>
-  <li></li>
-</ul>
+<section class="slide" id="risks" data-title="Risks and open questions">
+  <div class="slide-head"><span class="num">07</span><h2>Risks and open questions</h2></div>
+  <ul>
+    <li></li>
+  </ul>
+</section>
 
-<h2>Out of scope</h2>
-<ul>
-  <li></li>
-</ul>
+<section class="slide" id="out-of-scope" data-title="Out of scope">
+  <div class="slide-head"><span class="num">08</span><h2>Out of scope</h2></div>
+  <ul>
+    <li></li>
+  </ul>
+</section>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+const rail = document.querySelector(".rail");
+const counter = document.querySelector(".counter");
+const progress = document.querySelector(".progress");
+const dockCount = document.querySelector(".dock-count");
+const dockNote = document.querySelector(".dock-note");
+const storeKey = "plan-review:" + document.title;
+
+slides.forEach(slide => {
+  if (slide.querySelector(".section-comment")) return;
+  const card = document.createElement("div");
+  card.className = "card comment-card";
+  const label = slide.id === "overview" ? "Comment on the plan" : "Comment on this section";
+  card.innerHTML = "<label>" + label + "<textarea class=\"section-comment\"></textarea></label>";
+  slide.append(card);
+});
+
+document.querySelectorAll("table").forEach(table => {
+  if (table.querySelector(".note-toggle")) return;
+  let item = 0;
+  [...table.rows].forEach(row => {
+    if ([...row.cells].every(cell => cell.tagName === "TH")) {
+      row.append(document.createElement("th"));
+      return;
+    }
+    const label = (row.cells[0] ? row.cells[0].innerText : "").replace(/\s+/g, " ").trim();
+    const cell = document.createElement("td");
+    cell.className = "note-cell";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "note-toggle";
+    button.textContent = "Comment";
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-label", "Comment on " + label);
+    cell.append(button);
+    row.append(cell);
+    const note = document.createElement("tr");
+    note.className = "note-row";
+    note.hidden = true;
+    const noteCell = document.createElement("td");
+    noteCell.colSpan = 8;
+    const area = document.createElement("textarea");
+    area.dataset.item = String(item);
+    area.dataset.label = label;
+    item += 1;
+    const field = document.createElement("label");
+    field.append("Comment on this row", area);
+    noteCell.append(field);
+    note.append(noteCell);
+    row.after(note);
+  });
+});
+
+slides.forEach(slide => {
+  const link = document.createElement("a");
+  link.href = "#" + slide.id;
+  link.innerHTML = "<span>" + slide.dataset.title + "</span>";
+  rail.append(link);
+});
+const links = [...rail.children];
+let current = 0;
+const mark = i => {
+  current = i;
+  links.forEach((link, j) => link.classList.toggle("active", j === i));
+  counter.textContent = (i + 1) + " / " + slides.length;
+  progress.style.width = ((i + 1) / slides.length * 100) + "%";
+};
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => { if (entry.isIntersecting) mark(slides.indexOf(entry.target)); });
+}, { rootMargin: "-45% 0px -45% 0px" });
+slides.forEach(slide => observer.observe(slide));
+const go = i => slides[Math.max(0, Math.min(slides.length - 1, i))].scrollIntoView();
+addEventListener("keydown", event => {
+  if (event.target.closest("input, textarea, button")) return;
+  if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) { event.preventDefault(); go(current + 1); }
+  if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) { event.preventDefault(); go(current - 1); }
+  if (event.key === "Home") { event.preventDefault(); go(0); }
+  if (event.key === "End") { event.preventDefault(); go(slides.length - 1); }
+});
+
+document.querySelectorAll(".note-toggle").forEach(button => {
+  button.addEventListener("click", () => {
+    const note = button.closest("tr").nextElementSibling;
+    const open = note.hidden;
+    note.hidden = !open;
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) note.querySelector("textarea").focus();
+  });
+});
+
+function sectionNotes(slide) {
+  const comment = slide.querySelector(".section-comment").value.trim();
+  const items = [...slide.querySelectorAll(".note-row textarea")].flatMap(area => {
+    const text = area.value.trim();
+    return text ? [{ label: area.dataset.label, comment: text }] : [];
+  });
+  return { id: slide.id, title: slide.dataset.title, comment, items };
+}
+
+function paint() {
+  let count = 0;
+  slides.forEach((slide, i) => {
+    const notes = sectionNotes(slide);
+    const has = !!(notes.comment || notes.items.length);
+    count += (notes.comment ? 1 : 0) + notes.items.length;
+    links[i].classList.toggle("has-note", has);
+    slide.querySelectorAll(".note-toggle").forEach(button => {
+      const area = button.closest("tr").nextElementSibling.querySelector("textarea");
+      button.classList.toggle("has-note", area.value.trim().length > 0);
+    });
+  });
+  dockCount.textContent = count === 0 ? "No comments" : count === 1 ? "1 comment" : count + " comments";
+}
+
+function snapshot() {
+  const saved = {};
+  slides.forEach(slide => {
+    const items = {};
+    slide.querySelectorAll(".note-row textarea").forEach(area => { items[area.dataset.item] = area.value; });
+    saved[slide.id] = { comment: slide.querySelector(".section-comment").value, items };
+  });
+  localStorage.setItem(storeKey, JSON.stringify(saved));
+  paint();
+}
+
+document.querySelectorAll("textarea").forEach(area => area.addEventListener("input", snapshot));
+
+try {
+  const saved = JSON.parse(localStorage.getItem(storeKey) || "{}");
+  slides.forEach(slide => {
+    const item = saved[slide.id];
+    if (!item) return;
+    slide.querySelector(".section-comment").value = item.comment || "";
+    slide.querySelectorAll(".note-row textarea").forEach(area => {
+      area.value = (item.items && item.items[area.dataset.item]) || "";
+    });
+  });
+} catch (err) {}
+
+function payload() {
+  return {
+    plan: document.title,
+    savedAt: new Date().toISOString(),
+    comments: slides.map(sectionNotes).filter(notes => notes.comment || notes.items.length)
+  };
+}
+
+function reviewText() {
+  const notes = payload().comments;
+  if (!notes.length) return "# Review: " + document.title + "\n\nNo comments.";
+  const lines = ["# Review: " + document.title, ""];
+  notes.forEach(notes => {
+    lines.push("## " + notes.title);
+    if (notes.comment) lines.push(notes.comment, "");
+    notes.items.forEach(item => lines.push("- " + item.label + ": " + item.comment));
+    lines.push("");
+  });
+  return lines.join("\n").trim();
+}
+
+document.querySelector(".review-copy").addEventListener("click", async () => {
+  const text = reviewText();
+  try {
+    await navigator.clipboard.writeText(text);
+    dockNote.textContent = "Copied. Paste it to the agent.";
+  } catch (err) {
+    dockNote.textContent = "Clipboard unavailable.";
+  }
+});
+
+paint();
+mark(0);
+</script>
 </body>
 </html>

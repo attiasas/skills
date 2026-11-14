@@ -1,6 +1,6 @@
 ---
 name: hld-planner
-description: Settle a foggy idea into an approved design in one dialogue. A panel of expert subagents investigates and proposes approaches independently, and their findings drive the interview and two or three compared approaches. The plan is shown as HTML until it is approved, then the skill writes the HLD, spec, plan, or effort breakdown. A route of decisions settled across sessions belongs to wayfinder.
+description: Settle a foggy idea into an approved design in one dialogue. A panel of expert subagents investigates and proposes approaches independently, and their findings drive the interview and two or three compared approaches. The plan is shown as an HTML deck until it is approved, then the skill writes the HLD, spec, plan, or effort breakdown. A route of decisions settled across sessions belongs to wayfinder.
 disable-model-invocation: true
 ---
 
@@ -61,7 +61,7 @@ Wait for the human to pick. Accepting the recommendation is a pick.
 
 ## 5. Plan as HTML
 
-Write the plan to `plan.html` in the work directory, starting from [template.html](template.html). Open it with `open <path>` and give the path in chat.
+Write `plan.html` from [template.html](template.html). The template lists every section, in order: Overview, Goal, Context, Decisions, Approaches, Design, Phases, Risks and open questions, Out of scope. Each slide has an `id`, a `data-title`, and a `slide-head` with its number and `h2`. Overview is the title slide: the status pill, the `h1`, the date, and an agenda linking to the other slides. Drop a section the plan has nothing to say in, and say which you dropped. Add one Approaches slide per design choice. Renumber after you add or drop a slide.
 
 The plan holds:
 
@@ -73,15 +73,11 @@ The plan holds:
 - **Risks and open questions.** What is still unknown, and who decides it. Include expert objections the chosen approach did not answer.
 - **Out of scope.** What this plan does not include.
 
-Show the whole plan at once: write every section into `plan.html` before opening it, and point at the page rather than walking the sections in chat. On an edit, update `plan.html` and tell them to refresh. Do not write any other output format until the human approves the plan.
+In an approach table, the chosen row has `class="chosen"` and a `<span class="chosen-label">Chosen</span>` in the first cell. Put the experts who proposed it on the next line, in `<span class="who">`. Omit that line when no expert proposed it. Write ordinary tables. The page adds a comment on each slide and a comment on each table row.
 
-The page opens fully expanded. A short section is an `h2`: a few sentences, a list of five items or fewer, or a table of three short rows.
+Write every slide before opening the page. Open `plan.html` with `open` and give the path in chat. There is no server.
 
-Wrap a longer section in `<details class="section" open>`, with the `h2` inside the `summary`. Use this for a long writeup, a decision table past three rows, more than one approach table, an approach table whose cells are full sentences, a long phase list, or a long risk list. Leave a short section as a plain `h2`.
-
-A single small diagram stays inline. When Design has more than one diagram, or a diagram has more than about eight nodes, wrap each diagram in `<details class="diagram" open>` and name it in the `summary`.
-
-In an approach table, the chosen row has `class="chosen"` and a `<span class="chosen-label">Chosen</span>` in the first cell. Put the experts who proposed it on the next line, in `<span class="who">`. Omit that line when no expert proposed it.
+Review is optional. The human may comment in chat, comment on the page and paste what Copy puts on the clipboard, or accept the plan with no comments. Any of those is enough. Apply comments they did give, rewrite `plan.html`, and tell them to refresh. When they accept the plan, go to step 6. Do not write any other output before that. Do not ask them to comment on the page, and do not ask them to repeat a comment they already gave.
 
 ## 6. Produce the output
 
