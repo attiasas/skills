@@ -47,6 +47,7 @@
     border: 1px solid var(--line); background: transparent; color: var(--fg);
   }
   .dock .review-copy { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+  .dock button:disabled { opacity: .4; cursor: default; }
   .dock-note { position: fixed; left: 1rem; bottom: 3.1rem; margin: 0; font-size: 13px; color: var(--muted); z-index: 10; }
   .slide { min-height: 100vh; scroll-snap-align: start; padding: 4.5rem max(4rem, calc((100vw - 1100px) / 2)) 5.5rem; border-bottom: 1px solid var(--line); }
   .slide-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: .4rem; }
@@ -102,6 +103,7 @@
 <div class="counter"></div>
 <div class="dock">
   <span class="dock-count">No comments</span>
+  <button type="button" class="review-clear" disabled>Clear</button>
   <button type="button" class="review-copy">Copy</button>
 </div>
 <p class="dock-note"></p>
@@ -185,6 +187,7 @@ const counter = document.querySelector(".counter");
 const progress = document.querySelector(".progress");
 const dockCount = document.querySelector(".dock-count");
 const dockNote = document.querySelector(".dock-note");
+const clearButton = document.querySelector(".review-clear");
 const storeKey = "plan-review:" + document.title;
 
 slides.forEach(slide => {
@@ -291,6 +294,7 @@ function paint() {
     });
   });
   dockCount.textContent = count === 0 ? "No comments" : count === 1 ? "1 comment" : count + " comments";
+  clearButton.disabled = count === 0;
 }
 
 function snapshot() {
@@ -338,6 +342,20 @@ function reviewText() {
   });
   return lines.join("\n").trim();
 }
+
+clearButton.addEventListener("click", () => {
+  slides.forEach(slide => {
+    slide.querySelector(".section-comment").value = "";
+    slide.querySelectorAll(".note-row").forEach(note => {
+      note.querySelector("textarea").value = "";
+      note.hidden = true;
+    });
+    slide.querySelectorAll(".note-toggle").forEach(button => button.setAttribute("aria-expanded", "false"));
+  });
+  localStorage.removeItem(storeKey);
+  paint();
+  dockNote.textContent = "Comments cleared.";
+});
 
 document.querySelector(".review-copy").addEventListener("click", async () => {
   const text = reviewText();

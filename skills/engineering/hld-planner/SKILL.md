@@ -77,7 +77,7 @@ In an approach table, the chosen row has `class="chosen"` and a `<span class="ch
 
 Write every slide before opening the page. Open `plan.html` with `open` and give the path in chat. There is no server.
 
-Review is optional. The human may comment in chat, comment on the page and paste what Copy puts on the clipboard, or accept the plan with no comments. Any of those is enough. Apply comments they did give, rewrite `plan.html`, and tell them to refresh. When they accept the plan, go to step 6. Do not write any other output before that. Do not ask them to comment on the page, and do not ask them to repeat a comment they already gave.
+Review is optional. The human may comment in chat, comment on the page and paste what Copy puts on the clipboard, or accept the plan with no comments. Any of those is enough. Apply comments they did give, rewrite `plan.html`, and tell them to refresh. Comments stay in the browser across that refresh. Clear, next to Copy, wipes the section and row comments. When they accept the plan, go to step 6. Do not write any other output before that. Do not ask them to comment on the page, and do not ask them to repeat a comment they already gave.
 
 ## 6. Produce the output
 
