@@ -6,7 +6,9 @@ Base branch: <branch>
 
 ## Acceptance criteria
 
-- [ ] AC1: <criterion from spec.md>
+One line per acceptance criterion and per validation. There is no fixed count.
+
+- [ ] AC1: <item from Acceptance criteria or Validations in spec.md>
 - [ ] AC2: <...>
 
 ## Tasks

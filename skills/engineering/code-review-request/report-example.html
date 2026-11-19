@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review: verify and repair the search index</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: light-dark(#1c1c1c, #eceae4);
+    --muted: light-dark(#5c5a55, #b3b0a8);
+    --bg: light-dark(#f6f5f1, #121212);
+    --panel: light-dark(#fff, #1c1c1b);
+    --line: light-dark(#e4e1d8, #333330);
+    --accent: light-dark(#2f5bd3, #8aa8ff);
+    --pass-bg: light-dark(#e5f4e8, #1d3a26);
+    --pass-fg: light-dark(#1d5a2e, #bfe8cb);
+    --warn-bg: light-dark(#fff1d6, #4a3912);
+    --warn-fg: light-dark(#7a5200, #f3dca6);
+    --bad-bg: light-dark(#fde8e6, #4a2220);
+    --bad-fg: light-dark(#8a1f16, #f6c7c2);
+    --chip: light-dark(#f3f1eb, #2a2a28);
+    --shadow: light-dark(0 1px 2px rgba(28, 28, 28, .04), none);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 16px/1.5 -apple-system, system-ui, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  :not(pre) > code { background: var(--chip); padding: 0 .28rem; border-radius: 4px; font-size: .88em; }
+  a { color: var(--accent); }
+  button, summary { font: inherit; }
+  .wrap { width: min(880px, calc(100% - 2rem)); margin: 0 auto; }
+  .bar {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .wrap { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .65rem 0; }
+  .bar strong { font-size: .92rem; }
+  .bar-side { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; justify-content: flex-end; }
+  .status {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .22rem .65rem; border-radius: 999px; font-weight: 650; font-size: .82rem;
+    background: var(--bad-bg); color: var(--bad-fg);
+  }
+  header.page { padding: 1.6rem 0 0; }
+  .kicker-row { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; margin: 0; }
+  .kicker { margin: 0; color: var(--muted); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+  h1 { margin: .35rem 0 .9rem; font-size: 1.85rem; line-height: 1.15; letter-spacing: -.02em; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin: 0; padding: 0; list-style: none; }
+  .meta li { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .65rem .75rem; box-shadow: var(--shadow); }
+  .meta span { display: block; color: var(--muted); font-size: .75rem; letter-spacing: .03em; text-transform: uppercase; }
+  .meta strong, .meta a { font-size: .92rem; font-weight: 600; }
+  .meta .from { display: block; margin-top: .1rem; color: var(--muted); font-size: .8rem; font-style: normal; font-weight: 450; }
+  h2 { margin: 0; font-size: 1.05rem; }
+  .summary, .item, .finding, .findings {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+  }
+  .summary { padding: 1rem 1.1rem 1.05rem; margin-top: .75rem; }
+  .summary .lead { margin: .45rem 0 0; max-width: 68ch; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .9rem; }
+  .split h3 { margin: 0 0 .35rem; font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .split ul { margin: 0; padding-left: 1.1rem; }
+  .split li + li { margin-top: .25rem; }
+  section { margin: .75rem 0; }
+  header.page details.block { margin-top: 1rem; }
+  details.block { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: var(--shadow); }
+  details.block > summary {
+    cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+    padding: .85rem 1rem;
+  }
+  details.block > summary::-webkit-details-marker { display: none; }
+  details.block > summary::after { content: "▸"; color: var(--muted); }
+  details.block[open] > summary::after { content: "▾"; }
+  details.block > summary:hover { color: var(--accent); }
+  .count { color: var(--muted); font-weight: 450; font-size: .88rem; }
+  .body { padding: 0 1rem 1rem; }
+  .body table + table { margin-top: 1.5rem; }
+  .item { padding: .9rem 1rem; margin-top: .65rem; }
+  .item header, .finding header, .section-head, .sev {
+    display: flex; justify-content: space-between; gap: .6rem; align-items: flex-start;
+  }
+  .item h3, .finding h3 { margin: .55rem 0 0; font-size: 1rem; }
+  .sub { margin: .2rem 0 0; color: var(--muted); font-size: .88rem; }
+  .steps { margin-top: .7rem; }
+  .steps p { margin: .2rem 0; }
+  pre {
+    margin: .35rem 0; padding: .7rem .8rem; overflow-x: auto;
+    background: var(--chip); border-radius: 8px; line-height: 1.45; font-size: .86rem;
+  }
+  .expect { margin: .45rem 0 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: .6rem .4rem; border-top: 1px solid var(--line); }
+  th { color: var(--muted); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
+  .pill {
+    display: inline-block; padding: .08rem .45rem; border-radius: 999px;
+    background: var(--chip); color: var(--muted); font-size: .75rem; font-weight: 650; letter-spacing: .02em;
+  }
+  .pill.critical { background: var(--bad-bg); color: var(--bad-fg); }
+  .pill.important { background: var(--warn-bg); color: var(--warn-fg); }
+  .pill.pass, .pill.ran { background: var(--pass-bg); color: var(--pass-fg); }
+  .pill.fail { background: var(--bad-bg); color: var(--bad-fg); }
+  .pill.gap, .pill.open { background: var(--warn-bg); color: var(--warn-fg); }
+  .pill.from { background: transparent; border: 1px solid var(--line); }
+  .findings { padding: .35rem 1rem 1rem; }
+  .section-head { align-items: center; padding: .7rem 0 .2rem; }
+  .sev { align-items: center; justify-content: flex-start; gap: .5rem; margin: 1rem 0 .4rem; }
+  .sev h2 { font-size: .95rem; }
+  .icon-copy {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; padding: 0; flex: 0 0 auto;
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    border-radius: 7px; cursor: pointer;
+  }
+  .icon-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-copy.done { border-color: var(--pass-fg); color: var(--pass-fg); }
+  .icon-copy svg { width: 15px; height: 15px; }
+  .finding { padding: .85rem 1rem; margin: .5rem 0; }
+  .badges { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+  .finding p { margin: .4rem 0 0; }
+  .loc { color: var(--muted); font-size: .86rem; }
+  .suggestion {
+    margin: .7rem 0 0; padding: .55rem .7rem;
+    background: var(--chip); border-radius: 8px;
+  }
+  .suggestion span {
+    display: block; margin-bottom: .15rem;
+    color: var(--muted); font-size: .72rem; font-weight: 650;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  @media (max-width: 720px) {
+    .split { grid-template-columns: 1fr; }
+    .bar .wrap { align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="wrap">
+    <strong>Verify and repair the search index</strong>
+    <div class="bar-side">
+      <span class="pill critical">1 critical</span>
+      <span class="pill important">3 important</span>
+      <span class="pill">1 minor</span>
+      <span class="pill important">2 disagreements</span>
+    </div>
+  </div>
+</div>
+
+<header class="page wrap">
+  <p class="kicker-row">
+    <span class="kicker">Code review · task checkpoint</span>
+    <span class="status">Not ready for merge</span>
+  </p>
+  <h1>Verify and repair the search index</h1>
+  <ul class="meta">
+    <li><span>Commit range</span><strong class="mono">a7981ec..3df7661</strong><em class="from">4 commits</em></li>
+    <li><span>Branch</span><strong class="mono">repair-index</strong><em class="from">from main</em></li>
+    <li><span>Pull request</span><strong><a href="https://github.com/example/search/pull/128">#128</a></strong></li>
+    <li><span>Issue</span><strong><a href="https://example.atlassian.net/browse/SEARCH-142">SEARCH-142</a></strong></li>
+    <li><span>Date</span><strong>18 Nov 2026</strong></li>
+  </ul>
+
+  <details class="block">
+    <summary>
+      <h2>Context</h2>
+    </summary>
+    <div class="body">
+      <p>Task 2 of the deployment plan. Report four kinds of index damage, repair them, and reject an invalid date with an example.</p>
+    </div>
+  </details>
+
+  <div class="summary">
+    <h2>Summary</h2>
+    <p class="lead">repairIndex classifies four kinds of index damage and rebuilds the bad entries. The CLI takes <code>--index</code> and <code>--concurrency</code>. Invalid dates still look like an empty search, and <code>--index</code> can read any file the process can read.</p>
+    <div class="split">
+      <div>
+        <h3>Strengths</h3>
+        <ul>
+          <li>The four issue types are asserted by a test that ran and passed.</li>
+          <li>Repair writes through one function, <code>repairIndex</code>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Risks</h3>
+        <ul>
+          <li>A caller can pass a path outside the data directory.</li>
+          <li>The invalid-date check failed.</li>
+          <li>Reviewers disagree on the CLI and indexer seam.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <details class="block">
+      <summary>
+        <h2>Roster and Acceptance status <span class="count">4 ran · 1 pass · 1 fail · 1 gap</span></h2>
+      </summary>
+      <div class="body">
+        <table>
+          <thead><tr><th>Seat</th><th></th><th>Why this seat</th></tr></thead>
+          <tbody>
+            <tr><td>Code reviewer</td><td><span class="pill ran">Ran</span></td><td>Every review.</td></tr>
+            <tr><td>Tech lead</td><td><span class="pill ran">Ran</span></td><td>CLI and indexer are two components.</td></tr>
+            <tr><td>Security</td><td><span class="pill ran">Ran</span></td><td><code>--index</code> is untrusted input.</td></tr>
+            <tr><td>Validation</td><td><span class="pill ran">Ran</span></td><td>Ran the checks below. Task checkpoint, existing tests only.</td></tr>
+            <tr><td>Data</td><td><span class="pill">Skipped</span></td><td>No schema, migration, or backfill.</td></tr>
+            <tr><td>Contract</td><td><span class="pill">Skipped</span></td><td>No public contract change.</td></tr>
+            <tr><td>Concurrency</td><td><span class="pill">Skipped</span></td><td>No shared mutable state.</td></tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th>Acceptance criterion</th><th></th><th>Who</th><th>Evidence</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>repairIndex reports missing, stale, corrupt, and extra entries.</td>
+              <td><span class="pill pass">pass</span></td>
+              <td>Validation</td>
+              <td>
+                <pre>npm test -- src/indexer.test.ts
+
+✓ reports missing, stale, corrupt, and extra
+Tests  1 passed</pre>
+              </td>
+            </tr>
+            <tr>
+              <td>An invalid date fails with a YYYY-MM-DD example.</td>
+              <td><span class="pill fail">fail</span></td>
+              <td>Validation</td>
+              <td>
+                <pre>npm test -- src/search.test.ts
+
+✕ invalid ISO date throws with an example
+AssertionError: expected '' to match /YYYY-MM-DD/
+Tests  1 failed</pre>
+              </td>
+            </tr>
+            <tr>
+              <td>A custom index path outside the data directory is rejected.</td>
+              <td><span class="pill gap">gap</span></td>
+              <td>Nobody</td>
+              <td>No command has been run. The manual check below is the one to run.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <details class="block" open>
+      <summary>
+        <h2>Manual validations <span class="count">1 still open</span></h2>
+      </summary>
+      <div class="body">
+        <article class="item">
+          <header>
+            <div>
+              <h3>Reject an index path outside the data directory</h3>
+              <p class="sub">Covers the custom-path acceptance criterion. One command from the repo root.</p>
+            </div>
+            <span class="pill open">Not run</span>
+          </header>
+          <div class="steps">
+            <p>Run</p>
+            <pre>node cli.js --index /etc/passwd</pre>
+            <p class="expect"><strong>Pass looks like</strong> a non-zero exit and <code>path must stay under the data directory</code>.</p>
+            <p class="sub">Nobody has run this. The task checkpoint left it as a gap.</p>
+          </div>
+        </article>
+
+        <article class="item">
+          <header>
+            <div>
+              <h3>Repair prints all four issue types</h3>
+              <p class="sub">Covers the end-to-end repair of a stale index. One command from the repo root.</p>
+            </div>
+            <span class="pill pass">Ran · QA subagent</span>
+          </header>
+          <div class="steps">
+            <p>Run</p>
+            <pre>node cli.js repair --index fixtures/stale</pre>
+            <p class="expect"><strong>Pass looks like</strong> stdout containing <code>missing</code>, <code>stale</code>, <code>corrupt</code>, and <code>extra</code>.</p>
+            <p class="sub">QA subagent ran it on 18 Nov 2026.</p>
+            <pre>missing  2
+stale    1
+corrupt  1
+extra    3
+exit 0</pre>
+          </div>
+        </article>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <details class="block">
+      <summary>
+        <h2>Disagreements <span class="count">1 seam, two judgments</span></h2>
+      </summary>
+      <div class="body">
+        <p class="sub">The verdict uses the stronger judgment. Each line can be copied on its own.</p>
+        <article class="finding" data-group="disagreement">
+          <header>
+            <div class="badges">
+              <span class="pill important">important</span>
+              <span class="pill">design</span>
+              <span class="pill from">from Tech lead</span>
+            </div>
+            <button class="icon-copy" type="button" title="Copy this disagreement" aria-label="Copy this disagreement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </header>
+          <h3>The CLI reaches into indexer internals</h3>
+          <p class="loc">cli/index.ts:4</p>
+          <p>The CLI imports indexer private helpers. Shipping one side without the other now breaks.</p>
+          <p class="suggestion"><span>Suggestion</span> Call the public <code>repairIndex</code> function and drop the private import.</p>
+          <script type="text/plain" class="payload">**Important · design** `cli/index.ts:4`
+From: Tech lead
+
+The CLI reaches into indexer internals
+
+The CLI imports indexer private helpers. Shipping one side without the other now breaks.
+
+Suggestion: Call the public `repairIndex` function and drop the private import.</script>
+        </article>
+        <article class="finding" data-group="disagreement">
+          <header>
+            <div class="badges">
+              <span class="pill">minor</span>
+              <span class="pill">defect</span>
+              <span class="pill from">from Code reviewer</span>
+            </div>
+            <button class="icon-copy" type="button" title="Copy this disagreement" aria-label="Copy this disagreement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </header>
+          <h3>The same import is a local nit</h3>
+          <p class="loc">cli/index.ts:4</p>
+          <p>The public function is already what the CLI calls on the repair path. The extra import is style.</p>
+          <p class="suggestion"><span>Suggestion</span> Leave the call path. Drop the extra import only if you are already editing the file.</p>
+          <script type="text/plain" class="payload">**Minor · defect** `cli/index.ts:4`
+From: Code reviewer
+
+The same import is a local nit
+
+The public function is already what the CLI calls on the repair path. The extra import is style.
+
+Suggestion: Leave the call path. Drop the extra import only if you are already editing the file.</script>
+        </article>
+      </div>
+    </details>
+  </section>
+
+  <section class="findings" id="findings">
+    <div class="section-head">
+      <h2>Findings <span class="count">5</span></h2>
+      <button class="icon-copy" type="button" data-copy-group="findings" title="Copy all findings" aria-label="Copy all findings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    </div>
+
+    <div class="sev">
+      <h2>Critical <span class="count">1</span></h2>
+      <button class="icon-copy" type="button" data-copy-group="critical" title="Copy critical findings" aria-label="Copy critical findings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    </div>
+
+    <article class="finding" data-group="critical">
+      <header>
+        <div class="badges">
+          <span class="pill critical">critical</span>
+          <span class="pill">security</span>
+          <span class="pill from">from Security</span>
+        </div>
+        <button class="icon-copy" type="button" title="Copy this finding" aria-label="Copy this finding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </header>
+      <h3>Index path is not confined to the data directory</h3>
+      <p class="loc">cli/index.ts:40</p>
+      <p><code>--index</code> is passed to <code>fs.readFile</code> with no root check. A caller can read files outside the data directory.</p>
+      <p class="suggestion"><span>Suggestion</span> Resolve the path and reject anything that does not stay under the data root.</p>
+      <script type="text/plain" class="payload">**Critical · security** `cli/index.ts:40`
+From: Security
+
+Index path is not confined to the data directory
+
+`--index` is passed to `fs.readFile` with no root check. A caller can read files outside the data directory.
+
+Suggestion: Resolve the path and reject anything that does not stay under the data root.</script>
+    </article>
+
+    <div class="sev">
+      <h2>Important <span class="count">3</span></h2>
+      <button class="icon-copy" type="button" data-copy-group="important" title="Copy important findings" aria-label="Copy important findings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    </div>
+
+    <article class="finding" data-group="important">
+      <header>
+        <div class="badges">
+          <span class="pill important">important</span>
+          <span class="pill">defect</span>
+          <span class="pill from">from Code reviewer</span>
+        </div>
+        <button class="icon-copy" type="button" title="Copy this finding" aria-label="Copy this finding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </header>
+      <h3>Invalid dates return no results</h3>
+      <p class="loc">search.ts:25-27</p>
+      <p>A date that is not ISO is treated as an empty search, so a bad argument looks like no matches.</p>
+      <p class="suggestion"><span>Suggestion</span> Validate the format and throw, with a YYYY-MM-DD example.</p>
+      <script type="text/plain" class="payload">**Important · defect** `search.ts:25-27`
+From: Code reviewer
+
+Invalid dates return no results
+
+A date that is not ISO is treated as an empty search, so a bad argument looks like no matches.
+
+Suggestion: Validate the format and throw, with a YYYY-MM-DD example.</script>
+    </article>
+
+    <article class="finding" data-group="important">
+      <header>
+        <div class="badges">
+          <span class="pill important">important</span>
+          <span class="pill">spec gap</span>
+          <span class="pill from">from Code reviewer</span>
+        </div>
+        <button class="icon-copy" type="button" title="Copy this finding" aria-label="Copy this finding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </header>
+      <h3>The flags are not discoverable</h3>
+      <p class="loc">cli/index.ts:1-31</p>
+      <p>There is no <code>--help</code>. The plan says the flags must be discoverable. <code>--concurrency</code> exists only if the caller already knows it.</p>
+      <p class="suggestion"><span>Suggestion</span> Print usage, including <code>--concurrency</code> and <code>--index</code>.</p>
+      <script type="text/plain" class="payload">**Important · spec gap** `cli/index.ts:1-31`
+From: Code reviewer
+
+The flags are not discoverable
+
+There is no `--help`. The plan says the flags must be discoverable. `--concurrency` exists only if the caller already knows it.
+
+Suggestion: Print usage, including `--concurrency` and `--index`.</script>
+    </article>
+
+    <article class="finding" data-group="important">
+      <header>
+        <div class="badges">
+          <span class="pill important">important</span>
+          <span class="pill">test gap</span>
+          <span class="pill from">from Code reviewer</span>
+        </div>
+        <button class="icon-copy" type="button" title="Copy this finding" aria-label="Copy this finding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </header>
+      <h3>Nothing asserts a path outside the data directory</h3>
+      <p class="loc">cli/index.test.ts</p>
+      <p>The new <code>--index</code> flag has no test that an escaped path is rejected, so the security fix can land without a check.</p>
+      <p class="suggestion"><span>Suggestion</span> Add a test that a path outside the data root throws.</p>
+      <script type="text/plain" class="payload">**Important · test gap** `cli/index.test.ts`
+From: Code reviewer
+
+Nothing asserts a path outside the data directory
+
+The new `--index` flag has no test that an escaped path is rejected, so the security fix can land without a check.
+
+Suggestion: Add a test that a path outside the data root throws.</script>
+    </article>
+
+    <div class="sev">
+      <h2>Minor <span class="count">1</span></h2>
+      <button class="icon-copy" type="button" data-copy-group="minor" title="Copy minor findings" aria-label="Copy minor findings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    </div>
+
+    <article class="finding" data-group="minor">
+      <header>
+        <div class="badges">
+          <span class="pill">minor</span>
+          <span class="pill">defect</span>
+          <span class="pill from">from Code reviewer</span>
+        </div>
+        <button class="icon-copy" type="button" title="Copy this finding" aria-label="Copy this finding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </header>
+      <h3>Progress interval is a bare number</h3>
+      <p class="loc">indexer.ts:130</p>
+      <p>The report interval is <code>100</code> with no name, so the next edit has to guess the unit.</p>
+      <p class="suggestion"><span>Suggestion</span> Name the interval. Leave the behavior.</p>
+      <script type="text/plain" class="payload">**Minor · defect** `indexer.ts:130`
+From: Code reviewer
+
+Progress interval is a bare number
+
+The report interval is `100` with no name, so the next edit has to guess the unit.
+
+Suggestion: Name the interval. Leave the behavior.</script>
+    </article>
+  </section>
+</main>
+<script>
+async function copyText(text, button) {
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  } catch (e) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    document.body.appendChild(area);
+    area.select();
+    try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+    area.remove();
+  }
+  const title = button.getAttribute("title");
+  button.classList.toggle("done", ok);
+  button.title = ok ? "Copied" : "Copy failed";
+  setTimeout(() => { button.classList.remove("done"); button.title = title; }, 1600);
+}
+function payloads(group) {
+  const root = group === "findings" ? document.getElementById("findings") : document;
+  const selector = group === "findings"
+    ? "article.finding"
+    : 'article.finding[data-group="' + group + '"]';
+  return [...root.querySelectorAll(selector)].map((article) => article.querySelector(".payload").textContent.trim()).join("\n\n---\n\n");
+}
+document.querySelectorAll("article.finding > header .icon-copy:not([data-copy-group])").forEach((button) => {
+  button.addEventListener("click", () => {
+    copyText(button.closest("article").querySelector(".payload").textContent.trim(), button);
+  });
+});
+document.querySelectorAll("[data-copy-group]").forEach((button) => {
+  button.addEventListener("click", () => copyText(payloads(button.dataset.copyGroup), button));
+});
+</script>
+</body>
+</html>

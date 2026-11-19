@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # HLD Planner
 
-The human brings an idea that is too big or too vague to build. Clear the fog with them, one question at a time, and finish a design in this session. Do not implement anything here.
+The human brings an idea that is too big or too vague to build. Clear the fog with them in this session, and finish a design. Do not implement anything here.
 
 This skill finishes in one session. When the open items are a route of decisions to settle later, tell the human to run `wayfinder` and stop. Do not draft that map here.
 
@@ -34,20 +34,34 @@ You orchestrate. The experts investigate. Do not run their investigations yourse
    - **Facts.** What the panel established, each with its source.
    - **Conflicts.** Where experts disagree. Keep both positions and who holds them. Do not settle a conflict yourself.
    - **Risks.** Merged and de-duplicated, highest first.
-   - **Questions for the human.** Merged from every expert, de-duplicated, sorted so the questions that block others come first. This list seeds the interview.
+   - **Questions for the human.** Merged from every expert and de-duplicated, in two groups: Product / Requirements, then Technical. Within each group, questions that block others come first. Each has information, options, and a recommendation. This list is what the interview shows.
 
 When a fact still matters and no expert could answer it (an external API, a library's behaviour, a protocol, a limit), call the `research` skill with that one question. Keep interviewing while it runs. Read its file under `.agent-research/` before relying on the answer.
 
 ## 3. Interview
 
-Start from the questions and conflicts in `findings.md`. Keep a running list. Sort it so the questions that block others come first. Put an expert conflict to the human as a question: both positions, who holds each, and your recommendation.
+Start from the questions and conflicts in `findings.md`. Show every open question in one message, in two sections. Do not ask them one at a time. Omit a section that has no questions.
 
-- Ask **one question per message.** Prefer the `AskQuestion` tool with two to four options. Use an open question only when you cannot name the options.
-- Ask about intent, constraints, users, scale, and what success is measured by. Do not ask for facts the panel or research already gave you.
-- When a question is a preference, the answer is theirs. When it is a fact, find it.
-- After each answer, update the list: drop what it settled, add what it made precise.
-- Stop interviewing when every remaining question either has an answer or is a design choice between approaches.
-- If an answer shows the rest are decisions for later sessions, stop. Tell the human to run `wayfinder` and pass what this session settled.
+**Product / Requirements.** Intent, who it is for, scope, product constraints, and how success is measured.
+
+**Technical.** Architecture, data, contracts, scale, security, operations, and other implementation choices.
+
+An expert conflict goes in the section it belongs to. Both positions and who holds each go in Information. Within a section, questions that block others come first.
+
+Each question:
+
+```markdown
+1. **<question>**
+   - Information: <what the panel or research established that bears on it>
+   - Options: <two to four, or "open" when you cannot name them>
+   - Recommendation: <the option, and the deciding reason in one or two lines>
+```
+
+Do not ask for facts the panel or research already gave you. When a question is a fact, find it. When it is a preference, the answer is theirs; still give a recommendation.
+
+Wait for their answers. Accepting a recommendation is an answer. Then update the list: drop what they settled, add what an answer made precise, and show the revised list the same way. Stop when every remaining question either has an answer or is a design choice between approaches.
+
+If the answers show the rest are decisions for later sessions, stop. Tell the human to run `wayfinder` and pass what this session settled.
 
 ## 4. Approaches
 
@@ -98,7 +112,8 @@ Stop if you are about to:
 - Investigate the idea yourself instead of dispatching the panel
 - Dispatch an expert whose lens the idea does not touch
 - Settle an expert conflict without asking the human
-- Ask more than one question in a message
+- Ask one question at a time, or leave a question out of the two sections
+- Show a question without its information or its recommendation
 - Ask the human something the panel or research already answers
 - Present a single approach as the only option without saying why
 - Write the HLD, spec, or tickets before the HTML plan is approved

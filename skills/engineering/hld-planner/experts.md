@@ -45,7 +45,7 @@ Write <work-dir>/experts/<role>.md with these sections:
 - **Facts.** Verified, each with its source.
 - **Inferences.** What you believe but could not verify, and why.
 - **Risks.** Each with likelihood, impact, and the evidence.
-- **Questions for the human.** Only what the code and sources cannot answer. For each, give two to four options when you can name them.
+- **Questions for the human.** Only what the code and sources cannot answer. Tag each `product` or `technical`. For each: the information that bears on it, two to four options when you can name them, and a recommendation with the reason.
 - **Constraints.** What any design must respect, from your lens.
 
 Return a three-line summary and the path.

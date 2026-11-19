@@ -1,150 +1,81 @@
 ---
 name: code-review-request
-description: Dispatch a fresh-context review of completed work before it cascades, and add a tech-lead architect review when the change is large or crosses components. Use when finishing a task, implementing a major feature, or before merging.
+description: Dispatches a fresh-context review of completed work, adding a specialist only when the diff matches that lens, and runs a validation pass that records each command and its output. Use when finishing a task, a major feature, or before merging. Writes the HTML report only when asked, and posts pull-request comments only after a yes in chat.
 ---
 
-# Requesting Code Review
+# Request a code review
 
-Dispatch a code reviewer subagent to catch issues before they cascade. When the change is large or touches more than one component, also dispatch a tech lead (system and code architect) and aggregate both reports. Every reviewer gets a fresh context and the work product only — never this session's history.
+Review completed work before it cascades. Dispatch fresh-context seats, run the checks, and write one report. A seat sees the diff and the requirements. It does not see this session's history or another seat's findings.
 
-**Core principle:** Review early, review often.
+## When
 
-## When to Request Review
+Use a **task checkpoint** after a task, and when the review is because you are stuck, before a refactor, or after a complex bug.
 
-**Mandatory:**
-- After each task in subagent-driven development
-- After completing major feature
-- Before merge to main
+Use the **before-merge** bar after a major feature and before a merge.
 
-**Optional but valuable:**
-- When stuck (fresh perspective)
-- Before refactoring (baseline check)
-- After fixing complex bug
+## Range
 
-## How to Request
+Pin the base and the head. Read `git diff --stat <base>..<head>` and `git rev-list --count <base>..<head>`. Record the branch, the base it comes from, and the commit count. Record a pull request link when one exists, and an issue link when the work names one.
 
-**1. Get git SHAs:**
-```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
-HEAD_SHA=$(git rev-parse HEAD)
-```
+## Seats
 
-**2. Decide who reviews**
+Dispatch every matching seat in one turn, plus validation. Use a general-purpose subagent and a fresh context. Fill [seats.md](seats.md).
 
-Always dispatch the code reviewer.
+| Seat | Dispatch when |
+| --- | --- |
+| Code reviewer | Always. Defects, quality, plan alignment. |
+| Tech lead | Two or more components, or 8 or more files, or 400 or more changed lines. If you cannot tell whether two paths are one component, they are two. |
+| Security | Auth, secrets, personal data, permissions, or untrusted input. |
+| Data | Schema, migration, or backfill. |
+| Contract | A public HTTP, RPC, event, or CLI contract changes. |
+| Concurrency | Shared mutable state, locking, or async coordination. |
+| Validation | Always. It runs the checks. It does not review. |
 
-Also dispatch a tech lead when the change is risky. Read `git diff --stat "$BASE_SHA".."$HEAD_SHA"` and `git diff --shortstat "$BASE_SHA".."$HEAD_SHA"`. Risky means either:
+A skipped seat is one line: the lens and the predicate that failed. Domain, frontend, performance, and operations are not seats.
 
-- Files land in two or more components (separate packages, services, modules, or top-level areas). If you cannot tell whether two paths are one component, they are two.
-- The diff is large: 8 or more files, or 400 or more changed lines.
+## Evidence
 
-**3. Dispatch**
+Validation executes. It does not commit and it does not edit source.
 
-Dispatch a `general-purpose` subagent with a fresh context, filling [code-reviewer.md](code-reviewer.md).
+On a task checkpoint, run the tests that cover the diff. Record the command and the output. An observable criterion that needs the full system, and cannot be run yet, is a `gap`. A gap does not block the next task. A check that ran and failed is a `fail`, and a fail blocks.
 
-When step 2 says the tech lead is required, dispatch a second `general-purpose` subagent in the same turn, also with a fresh context, filling [tech-lead.md](tech-lead.md). The tech lead is a system and code architect. They review the same range. They do not see this session's history, your implementation reasoning, or the code reviewer's prompt or output.
+On the before-merge bar, every observable acceptance criterion needs a real command and its output. A gap or a fail blocks a Yes. A unit test counts only for the criterion it asserts.
 
-**Placeholders (both templates):**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
+A sentence with no command is a gap. A manual validation is one command from a named directory, what it covers, what a pass looks like, and who ran it. A run includes the output.
 
-**4. Aggregate**
+## Aggregate
 
-Wait for every reviewer you dispatched. Act on the combined result, not on whichever report returns first.
+Wait for every seat you dispatched.
 
-If the tech lead was not required, the result is the code reviewer's report plus one line: `Tech lead skipped: one component, <N> files, <M> lines.`
+One finding per issue. When two seats describe the same issue at the same severity, keep the sharper write-up and name both. When they judge the same change differently, keep both items under Disagreements. The verdict uses the stronger one.
 
-If both ran, write:
+Verdict, first match:
 
-```
-## Review
+- **No** when any finding is critical, any seat says No, or a fail is open. On the before-merge bar a gap is also No.
+- **With fixes** when anything important remains.
+- **Yes** when every seat that ran says Yes and nothing above minor remains.
 
-### Code review
-<code-reviewer report>
+The status line is `Not ready for merge`, `Ready with fixes`, or `Ready for merge`.
 
-### Tech lead
-<tech-lead report>
+## Report
 
-### Combined
-Verdict: Yes | With fixes | No
+Write the report in chat, in this order: mode and status, range, a two-or-three-line summary with strengths and risks, roster, acceptance status, manual validations, disagreements, findings. Group findings critical, then important, then minor. Omit an empty severity.
 
-#### Critical
-#### Important
-#### Minor
+Each finding and each disagreement has severity, type, the seat it is from, a title, the file, what is wrong, and a suggestion. Types are defect, spec gap, design, security, data, contract, and test gap.
 
-### Disagreements
-```
+Write the HTML page only when they ask. Put it at `.agent-docs/code-review-<short-sha>.html` in the repo under review, following [report-example.html](report-example.html). Do not edit the example. Open the page with `open`. There is no server.
 
-- List each issue once, under its severity. When both reports describe the same issue, keep the sharper write-up and name both sources.
-- A disagreement stays as two lines under `### Disagreements`. Do not merge it into one milder issue.
-- Verdict, first match: **No** if any issue is Critical or any assessment is No. **With fixes** if any issue is Important or any assessment is With fixes. **Yes** only when every report that ran says Yes and nothing above Minor remains.
+## Act
 
-**5. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if a reviewer is wrong (with reasoning)
+Fix a critical finding before anything else. Fix an important finding before the next task, or before the merge. Record a minor finding and leave it. Push back when a finding is wrong, and show the code or the output that shows it.
 
-## Example
+When the review is a pull request, ask whether to post the findings as review comments. Post each finding and each disagreement as its own comment, and only after a yes.
 
-```
-[Just completed Task 2: Add verification function]
+## Never
 
-You: Let me request code review before proceeding.
-
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
-
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: With fixes
-
-Tech lead skipped: one component, 2 files, 80 lines.
-
-You: [Fix progress indicators]
-[Continue to Task 3]
-```
-
-## Integration with Workflows
-
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
-
-**Executing Plans:**
-- Review after each task or at natural checkpoints
-- Get feedback, apply, continue
-
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
-
-## Red Flags
-
-**Never:**
-- Skip review because "it's simple"
-- Skip the tech lead because the code reviewer already has an architecture section
-- Show the tech lead the code reviewer's findings
-- Collapse a disagreement into one softer finding
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
-
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
-
-Templates: [code-reviewer.md](code-reviewer.md), [tech-lead.md](tech-lead.md)
+- Skip a seat whose predicate matches
+- Show one seat another's findings
+- Treat a sentence with no command as a pass
+- Collapse a disagreement into one milder finding
+- Write the HTML page when they did not ask
+- Post pull-request comments before a yes

@@ -1,6 +1,6 @@
 ---
 name: code-review-receive
-description: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation
+description: Evaluates code-review feedback before changing code, then closes with a triage of each item by severity and type. Use when review comments arrive, especially when they are unclear or technically questionable. Writes an HTML summary only when asked, and posts replies only after a yes in chat.
 ---
 
 # Code Review Reception
@@ -22,6 +22,7 @@ WHEN receiving code review feedback:
 4. EVALUATE: Technically sound for THIS codebase?
 5. RESPOND: Technical acknowledgment or reasoned pushback
 6. IMPLEMENT: One item at a time, test each
+7. CLOSE: Triage in chat. HTML only if they asked. Then ask before posting replies
 ```
 
 ## Forbidden Responses
@@ -108,6 +109,7 @@ FOR multi-item feedback:
      - Complex fixes (refactoring, logic)
   3. Test each fix individually
   4. Verify no regressions
+  5. Close with the triage
 ```
 
 ## When To Push Back
@@ -172,6 +174,10 @@ State the correction factually and move on.
 | Avoiding pushback | Technical correctness > comfort |
 | Partial implementation | Clarify all items first |
 | Can't verify, proceed anyway | State limitation, ask for direction |
+| Close with a prose recap | The close is the triage, severity then type |
+| Write the HTML page every time | The page is only when they asked for a summary |
+| Put the reply question on the page | The question is in chat, after the triage |
+| Post replies before they answer | Ask once. Post after a yes, and only the handled items |
 
 ## Real Examples
 
@@ -200,9 +206,84 @@ You understand 1,2,3,6. Unclear on 4,5.
 ✅ "Understand 1,2,3,6. Need clarification on 4 and 5 before implementing."
 ```
 
-## GitHub Thread Replies
+## Close
 
-When replying to inline review comments on GitHub, reply in the comment thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), not as a top-level PR comment.
+After every item has a disposition, close in this order. The triage is the record of the run.
+
+### 1. Triage in chat
+
+One block per feedback item that has a disposition, including items you pushed back, declined, or left open.
+
+Order: severity, then type, then the order the reviewer wrote them.
+
+Severity, in this order: Critical, Important, Minor, Nit. Map Blocker to Critical and Suggestion to Nit. A comment with no severity is Important until the code shows a different one.
+
+Type, one per item, in this order: security, regression, defect, design, spec, test, scope, question, style. When two fit, use the earlier one.
+
+| Disposition | Meaning | Handled |
+| --- | --- | --- |
+| fixed | Code or tests changed to address it | yes |
+| pushed back | Rejected for this codebase. Code unchanged | yes |
+| declined | Out of scope or unused. Code unchanged | yes |
+| already correct | Checked. The code already does this | yes |
+| needs clarification | Stopped. Not implemented | no |
+| deferred | Accepted, left for later | no |
+
+Handled items are the ones a later yes may reply to. An understood item left unimplemented because something else was unclear is deferred, not fixed.
+
+```
+## Triage
+
+<n> fixed · <n> pushed back · <n> declined · <n> already correct · <n> needs clarification · <n> deferred
+
+Source: <PR or review URL, or "this conversation">
+
+### <Severity> · <Type>
+
+**<Item>** — <Disposition>
+- Reporter: <who>, <thread URL or "no thread">
+- Where: <file:line, or "no code site">
+- Reproduce: <steps that show the original finding. After a fix, the result of those same steps now>
+- Why: <the verified problem, or why the suggestion does not hold>
+- What changed: <one sentence, or "No code change">
+- Reasoning: <why the change takes this shape, or why the code stayed>
+- Evidence: <command and result, or file:line that shows the claim>
+```
+
+Omit a count that is zero. Omit a severity and type heading that has no items. Evidence is a command plus its result, or a file and line. Reproduce names the command or steps. When you could not reproduce it, name the command you ran and the result.
+
+Why is the verified problem. Reasoning is why the response takes this shape. They are different sentences.
+
+### 2. HTML summary, when they asked
+
+Write the page only when they asked for a summary, an HTML summary, or a page. Write `review-triage.html` in the current directory from [triage-template.html](triage-template.html). Replace every UPPERCASE placeholder. Leave the script in place. Do not commit the file.
+
+`SUMMARY` is two to four sentences: what was fixed, what was pushed back or declined, and what is still open. It sits after Overview. The search and the Handled, severity, type, and disposition filters are already in the template.
+
+Repeat the summary row and the item article once per item, in the same order as the chat triage. Give each item an id `item-1`, `item-2`, and so on. The summary row's `data-id` is that id, and its link points at it. Set `data-severity`, `data-type`, `data-disposition`, and `data-handled` on both the row and the article. `data-handled` is `yes` for fixed, pushed back, declined, and already correct, and `no` for needs clarification and deferred. `data-disposition` is `fixed`, `pushed-back`, `declined`, `correct`, `clarify`, or `deferred`. The disposition pill uses that class, and its text is the disposition name.
+
+Inside an item, the order is Where, Reproduce, Why, What changed, Reasoning, Evidence. Reporter stays on the line under the title. `REPORTER_NAME` in the summary table is the short name. `REPORTER` is that name plus the thread.
+
+Delete a severity section with no items, and its nav link.
+
+Open it with `open` and give the path. The page carries the same items as the chat triage. The chat triage stays complete. The page has no question and no reply.
+
+### 3. Ask about replies
+
+After the chat triage, and after the page is open when you wrote one, ask once in the chat with `AskQuestion`:
+
+- Post replies on the handled items
+- Don't post
+
+Silence is not a yes. "Post them" is a yes.
+
+On a yes, post one reply per handled item that has a thread, on that thread. The reply is the disposition, what changed or why the code stayed, and the evidence. No greeting and no thanks. On GitHub, an inline review comment is a reply on that comment:
+
+`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body='...'`
+
+An inline thread does not get a new top-level PR comment. A handled item with no thread is named in chat and not posted. Needs clarification and deferred stay unposted.
+
+On a no, stop.
 
 ## The Bottom Line
 
@@ -210,4 +291,4 @@ When replying to inline review comments on GitHub, reply in the comment thread (
 
 Verify. Question. Then implement.
 
-No performative agreement. Technical rigor always.
+No performative agreement. Technical rigor always. The run ends with the triage. Replies wait for a yes in chat.

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review triage: TITLE</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: light-dark(#1c1c1c, #eceae4);
+    --muted: light-dark(#5c5a55, #b3b0a8);
+    --bg: light-dark(#fbfaf7, #121212);
+    --panel: light-dark(#fff, #1b1b1a);
+    --line: light-dark(#e2e0da, #343432);
+    --accent: light-dark(#2f5bd3, #8aa8ff);
+    --critical-bg: light-dark(#fde8e8, #4a1c1c); --critical-fg: light-dark(#8f1d1d, #ffc9c9);
+    --important-bg: light-dark(#fff1d6, #4a3912); --important-fg: light-dark(#7a5200, #f3dca6);
+    --minor-bg: light-dark(#e7eefc, #1c2744); --minor-fg: light-dark(#1e3a8a, #c9d7ff);
+    --nit-bg: light-dark(#eeeae4, #2a2a28); --nit-fg: light-dark(#3f3d38, #d4d0c8);
+    --fixed-bg: light-dark(#e5f4e8, #1d3a26); --fixed-fg: light-dark(#1d5a2e, #bfe8cb);
+    --pushed-back-bg: light-dark(#fff1d6, #4a3912); --pushed-back-fg: light-dark(#7a5200, #f3dca6);
+    --declined-bg: light-dark(#eeeae4, #2a2a28); --declined-fg: light-dark(#3f3d38, #d4d0c8);
+    --correct-bg: light-dark(#e7eefc, #1c2744); --correct-fg: light-dark(#1e3a8a, #c9d7ff);
+    --clarify-bg: light-dark(#fde8e8, #4a1c1c); --clarify-fg: light-dark(#8f1d1d, #ffc9c9);
+    --deferred-bg: light-dark(#f3e8ff, #3b2760); --deferred-fg: light-dark(#5b21b6, #e4d4ff);
+    --type-bg: light-dark(#f4f3ef, #242422); --type-fg: light-dark(#3f3d38, #d4d0c8);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.5 "Iowan Old Style", Palatino, Georgia, serif;
+  }
+  header.top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 28px 12px;
+  }
+  header.top h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em; }
+  .status {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--minor-bg);
+    color: var(--minor-fg);
+    font: 600 12px/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  header.top p { margin: 0; color: var(--muted); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+  nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
+  nav a { color: var(--accent); text-decoration: none; }
+  main { max-width: 980px; margin: 0 auto; padding: 28px 28px 80px; }
+  section { margin: 0 0 36px; scroll-margin-top: 92px; }
+  h2 {
+    margin: 0 0 12px;
+    font: 600 13px/1.2 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .lead { margin: 0 0 16px; }
+  .meta { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; margin: 0; }
+  .meta dt, article dl dt { color: var(--muted); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+  .meta dd { margin: 0; }
+  .toolbar { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
+  .toolbar input[type="search"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--fg);
+    font: 14px/1.4 ui-sans-serif, system-ui, sans-serif;
+  }
+  .chiprow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chiprow .label {
+    min-width: 92px;
+    color: var(--muted);
+    font: 12px/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  button.chip {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--fg);
+    border-radius: 999px;
+    padding: 2px 10px;
+    cursor: pointer;
+    font: 600 12px/1.5 ui-sans-serif, system-ui, sans-serif;
+  }
+  button.chip[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: transparent;
+    color: light-dark(#fff, #121212);
+  }
+  .hint, #match-count, #empty {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font: 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+  }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+  th {
+    font: 600 12px/1.3 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  td a { color: var(--accent); }
+  article {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px 8px;
+    margin: 0 0 12px;
+    scroll-margin-top: 92px;
+  }
+  #critical article { border-left-color: var(--critical-fg); }
+  #important article { border-left-color: var(--important-fg); }
+  #minor article { border-left-color: var(--minor-fg); }
+  #nit article { border-left-color: var(--nit-fg); }
+  article h3 { margin: 8px 0 4px; font-size: 18px; letter-spacing: -0.01em; }
+  .who { margin: 0 0 12px; color: var(--muted); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+  .who a { color: var(--accent); }
+  article dl { display: grid; grid-template-columns: 9.5rem 1fr; gap: 6px 16px; margin: 0 0 8px; }
+  article dl dt { padding-top: 2px; }
+  article dl dd { margin: 0; }
+  .pill {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font: 600 12px/1.5 ui-sans-serif, system-ui, sans-serif;
+    white-space: nowrap;
+  }
+  .critical { background: var(--critical-bg); color: var(--critical-fg); }
+  .important { background: var(--important-bg); color: var(--important-fg); }
+  .minor { background: var(--minor-bg); color: var(--minor-fg); }
+  .nit { background: var(--nit-bg); color: var(--nit-fg); }
+  .type { background: var(--type-bg); color: var(--type-fg); text-transform: lowercase; }
+  .fixed { background: var(--fixed-bg); color: var(--fixed-fg); }
+  .pushed-back { background: var(--pushed-back-bg); color: var(--pushed-back-fg); }
+  .declined { background: var(--declined-bg); color: var(--declined-fg); }
+  .correct { background: var(--correct-bg); color: var(--correct-fg); }
+  .clarify { background: var(--clarify-bg); color: var(--clarify-fg); }
+  .deferred { background: var(--deferred-bg); color: var(--deferred-fg); }
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media print {
+    header.top { position: static; }
+    .toolbar, .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="status">Triage</div>
+  <h1>TITLE</h1>
+  <p>COUNTS</p>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#summary">Summary</a>
+    <a href="#critical">Critical</a>
+    <a href="#important">Important</a>
+    <a href="#minor">Minor</a>
+    <a href="#nit">Nit</a>
+  </nav>
+</header>
+<main>
+  <section id="overview">
+    <h2>Overview</h2>
+    <dl class="meta">
+      <dt>Source</dt><dd>SOURCE</dd>
+      <dt>Date</dt><dd>DATE</dd>
+      <dt>Counts</dt><dd>COUNTS</dd>
+    </dl>
+  </section>
+
+  <section id="summary">
+    <h2>Summary</h2>
+    <p class="lead">SUMMARY</p>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search title, where, reporter, why, what changed" autocomplete="off">
+      <div id="filters"></div>
+    </div>
+    <p class="hint">Handled is fixed, pushed back, declined, and already correct. Still open is needs clarification and deferred.</p>
+    <p id="match-count"></p>
+    <p id="empty" hidden>No items match.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Type</th>
+          <th>Disposition</th>
+          <th>Item</th>
+          <th>Where</th>
+          <th>Reporter</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Repeat this tr once per item, in triage order. data-id matches the article id. -->
+        <!-- data-severity: critical, important, minor, nit -->
+        <!-- data-type: security, regression, defect, design, spec, test, scope, question, style -->
+        <!-- data-disposition: fixed, pushed-back, declined, correct, clarify, deferred -->
+        <!-- data-handled: yes for fixed, pushed back, declined, already correct; no otherwise -->
+        <tr data-id="item-1" data-severity="critical" data-type="security" data-disposition="fixed" data-handled="yes">
+          <td><span class="pill critical">Critical</span></td>
+          <td><span class="pill type">TYPE</span></td>
+          <td><span class="pill fixed">DISPOSITION</span></td>
+          <td><a href="#item-1">ITEM</a></td>
+          <td>WHERE</td>
+          <td>REPORTER_NAME</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="critical">
+    <h2>Critical</h2>
+    <!-- Repeat this article once per Critical item, in type order. Delete this section, and its nav link, when it has no items. -->
+    <article id="item-1" data-severity="critical" data-type="security" data-disposition="fixed" data-handled="yes">
+      <div>
+        <span class="pill critical">Critical</span>
+        <span class="pill type">TYPE</span>
+        <span class="pill fixed">DISPOSITION</span>
+      </div>
+      <h3>ITEM</h3>
+      <p class="who">REPORTER</p>
+      <dl>
+        <dt>Where</dt><dd>WHERE</dd>
+        <dt>Reproduce</dt><dd><pre>REPRODUCE</pre></dd>
+        <dt>Why</dt><dd>WHY</dd>
+        <dt>What changed</dt><dd>WHAT_CHANGED</dd>
+        <dt>Reasoning</dt><dd>REASONING</dd>
+        <dt>Evidence</dt><dd><pre>EVIDENCE</pre></dd>
+      </dl>
+    </article>
+  </section>
+
+  <section id="important">
+    <h2>Important</h2>
+    <!-- Repeat this article once per Important item, in type order. Delete this section, and its nav link, when it has no items. -->
+    <article id="item-1" data-severity="important" data-type="TYPE" data-disposition="fixed" data-handled="yes">
+      <div>
+        <span class="pill important">Important</span>
+        <span class="pill type">TYPE</span>
+        <span class="pill fixed">DISPOSITION</span>
+      </div>
+      <h3>ITEM</h3>
+      <p class="who">REPORTER</p>
+      <dl>
+        <dt>Where</dt><dd>WHERE</dd>
+        <dt>Reproduce</dt><dd><pre>REPRODUCE</pre></dd>
+        <dt>Why</dt><dd>WHY</dd>
+        <dt>What changed</dt><dd>WHAT_CHANGED</dd>
+        <dt>Reasoning</dt><dd>REASONING</dd>
+        <dt>Evidence</dt><dd><pre>EVIDENCE</pre></dd>
+      </dl>
+    </article>
+  </section>
+
+  <section id="minor">
+    <h2>Minor</h2>
+    <!-- Repeat this article once per Minor item, in type order. Delete this section, and its nav link, when it has no items. -->
+    <article id="item-1" data-severity="minor" data-type="TYPE" data-disposition="fixed" data-handled="yes">
+      <div>
+        <span class="pill minor">Minor</span>
+        <span class="pill type">TYPE</span>
+        <span class="pill fixed">DISPOSITION</span>
+      </div>
+      <h3>ITEM</h3>
+      <p class="who">REPORTER</p>
+      <dl>
+        <dt>Where</dt><dd>WHERE</dd>
+        <dt>Reproduce</dt><dd><pre>REPRODUCE</pre></dd>
+        <dt>Why</dt><dd>WHY</dd>
+        <dt>What changed</dt><dd>WHAT_CHANGED</dd>
+        <dt>Reasoning</dt><dd>REASONING</dd>
+        <dt>Evidence</dt><dd><pre>EVIDENCE</pre></dd>
+      </dl>
+    </article>
+  </section>
+
+  <section id="nit">
+    <h2>Nit</h2>
+    <!-- Repeat this article once per Nit item, in type order. Delete this section, and its nav link, when it has no items. -->
+    <article id="item-1" data-severity="nit" data-type="TYPE" data-disposition="fixed" data-handled="yes">
+      <div>
+        <span class="pill nit">Nit</span>
+        <span class="pill type">TYPE</span>
+        <span class="pill fixed">DISPOSITION</span>
+      </div>
+      <h3>ITEM</h3>
+      <p class="who">REPORTER</p>
+      <dl>
+        <dt>Where</dt><dd>WHERE</dd>
+        <dt>Reproduce</dt><dd><pre>REPRODUCE</pre></dd>
+        <dt>Why</dt><dd>WHY</dd>
+        <dt>What changed</dt><dd>WHAT_CHANGED</dd>
+        <dt>Reasoning</dt><dd>REASONING</dd>
+        <dt>Evidence</dt><dd><pre>EVIDENCE</pre></dd>
+      </dl>
+    </article>
+  </section>
+</main>
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll("#summary tbody tr"));
+  var articles = Array.prototype.slice.call(document.querySelectorAll("article[data-severity]"));
+  var q = document.getElementById("q");
+  var host = document.getElementById("filters");
+  var count = document.getElementById("match-count");
+  var empty = document.getElementById("empty");
+  var labels = {
+    critical: "Critical",
+    important: "Important",
+    minor: "Minor",
+    nit: "Nit",
+    fixed: "fixed",
+    "pushed-back": "pushed back",
+    declined: "declined",
+    correct: "already correct",
+    clarify: "needs clarification",
+    deferred: "deferred"
+  };
+  var groups = [
+    {
+      key: "handled",
+      label: "Status",
+      options: [
+        { value: "yes", label: "Handled" },
+        { value: "no", label: "Still open" }
+      ]
+    },
+    { key: "severity", label: "Severity", order: ["critical", "important", "minor", "nit"] },
+    { key: "type", label: "Type", order: ["security", "regression", "defect", "design", "spec", "test", "scope", "question", "style"] },
+    { key: "disposition", label: "Disposition", order: ["fixed", "pushed-back", "declined", "correct", "clarify", "deferred"] }
+  ];
+  var state = { handled: "", severity: "", type: "", disposition: "", q: "" };
+
+  function present(key) {
+    var seen = {};
+    articles.forEach(function (el) { seen[el.getAttribute("data-" + key)] = true; });
+    return seen;
+  }
+
+  function addChip(row, groupKey, value, label) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "chip";
+    button.textContent = label;
+    button.setAttribute("aria-pressed", value === state[groupKey] ? "true" : "false");
+    button.addEventListener("click", function () {
+      state[groupKey] = value;
+      Array.prototype.forEach.call(row.querySelectorAll("button"), function (other) {
+        other.setAttribute("aria-pressed", other === button ? "true" : "false");
+      });
+      apply();
+    });
+    row.appendChild(button);
+  }
+
+  groups.forEach(function (group) {
+    var row = document.createElement("div");
+    row.className = "chiprow";
+    var label = document.createElement("span");
+    label.className = "label";
+    label.textContent = group.label;
+    row.appendChild(label);
+    addChip(row, group.key, "", "All");
+    var seen = present(group.key);
+    var options = group.options || group.order.map(function (value) {
+      return { value: value, label: labels[value] || value };
+    });
+    options.forEach(function (option) {
+      if (seen[option.value]) addChip(row, group.key, option.value, option.label);
+    });
+    host.appendChild(row);
+  });
+
+  var articleText = {};
+  articles.forEach(function (article) {
+    articleText[article.id] = (article.textContent || "").toLowerCase();
+  });
+
+  function match(el) {
+    if (state.handled && el.getAttribute("data-handled") !== state.handled) return false;
+    if (state.severity && el.getAttribute("data-severity") !== state.severity) return false;
+    if (state.type && el.getAttribute("data-type") !== state.type) return false;
+    if (state.disposition && el.getAttribute("data-disposition") !== state.disposition) return false;
+    if (state.q) {
+      var id = el.getAttribute("data-id") || el.id;
+      var blob = articleText[id] || (el.textContent || "").toLowerCase();
+      if (blob.indexOf(state.q) === -1) return false;
+    }
+    return true;
+  }
+
+  function apply() {
+    var shown = 0;
+    articles.forEach(function (article) {
+      var ok = match(article);
+      article.hidden = !ok;
+      if (ok) shown += 1;
+    });
+    rows.forEach(function (row) { row.hidden = !match(row); });
+    Array.prototype.forEach.call(document.querySelectorAll("main > section"), function (section) {
+      if (section.id === "overview" || section.id === "summary") return;
+      section.hidden = !section.querySelector("article:not([hidden])");
+    });
+    count.textContent = shown + (shown === 1 ? " item" : " items");
+    empty.hidden = shown !== 0;
+  }
+
+  q.addEventListener("input", function () {
+    state.q = q.value.trim().toLowerCase();
+    apply();
+  });
+  apply();
+})();
+</script>
+</body>
+</html>

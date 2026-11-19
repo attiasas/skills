@@ -54,7 +54,7 @@ Then write the artifact:
 - **Brief:** `design.md` from [brief.md](brief.md).
 - **HLD:** call `to-hld` with the output path `.agent-docs/assess-<slug>/design.md`. When `decision.md` exists, the HLD uses that interface and does not reopen it.
 
-Every acceptance criterion in `spec.md` maps to a test in the brief, or to a row in the HLD's testing section.
+Every acceptance criterion in `spec.md` maps to a test in the brief, or to a row in the HLD's testing section. Each item under **Validations** is an acceptance criterion.
 
 ## 5. Hand off
 
@@ -62,7 +62,7 @@ Show `decision.md` when it exists, and the path to `design.md`. Ask what to do n
 
 - **Human review.** Show the design and take their edits. Write the edits into `design.md` and, when the edit changes the recommendation, into `decision.md`.
 - **Record on the issue.** Only when the input was an issue. Draft a comment: the recommendation and the design summary. Show the exact body and wait for a reply to it. Then post it the way the tracker file says to comment. "Post whatever you write" said before the body was shown is not approval.
-- **Implementation handover.** Write `handover.md`: the spec, `decision.md` when it exists, the design inlined, and the acceptance criteria as a checklist. A fresh implementer must be able to start from that file alone. When the change spans more than one shippable slice, tell the human to run `to-tickets` with that file.
+- **Implementation handover.** Write `handover.md`: the spec, `decision.md` when it exists, the design inlined, and the acceptance criteria and validations as a checklist. A fresh implementer must be able to start from that file alone. When the change spans more than one shippable slice, tell the human to run `to-tickets` with that file.
 
 Do not implement the change here.
 

@@ -27,4 +27,4 @@ The design for a change that stays inside one module. Use the words from `codeba
 | --- | --- |
 ```
 
-Every acceptance criterion in the spec gets one row. The test crosses the interface, not the implementation.
+Every acceptance criterion in the spec gets one row. Each item under **Validations** is an acceptance criterion. The test crosses the interface, not the implementation.

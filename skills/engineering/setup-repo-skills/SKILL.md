@@ -13,7 +13,7 @@ Scaffold the per-repo configuration that the engineering skills assume.
 
 This is a prompt-driven skill, not a deterministic script. Explore, present what you found, confirm with the user, then write.
 
-Invoke it when you want that config ready before another engineering skill reads it. `to-spec`, `to-tickets`, and `implement-spec` read `.agent-repo-config/issue-tracker.md`. `wayfinder` reads it when the map is exported to the tracker. When `.agent-repo-config/triage-label.md` exists, `to-spec`, `wayfinder`, and `to-tickets` also read that.
+Invoke it when you want that config ready before another engineering skill reads it. `to-tickets` and `implement-spec` read `.agent-repo-config/issue-tracker.md`. `to-spec` reads it when publishing to the tracker, and writes a local spec when the file is missing. `wayfinder` reads it when the map is exported to the tracker. When `.agent-repo-config/triage-label.md` exists, `to-spec`, `wayfinder`, and `to-tickets` also read that on a tracker publish.
 
 The config is local to the repo being set up. Write it under `.agent-repo-config/` and keep that directory gitignored. Do not commit it, and do not copy it into `docs/` or a steering file.
 
@@ -85,6 +85,6 @@ Leave every other file alone. In particular, do not create `docs/agents/`, and d
 
 ### 5. Done
 
-Tell the user the setup is complete. `to-spec`, `to-tickets`, and `implement-spec` read `.agent-repo-config/issue-tracker.md`, which is gitignored. `wayfinder` reads it when the map is exported to the tracker. When a triage map was written, `to-spec`, `wayfinder`, and `to-tickets` also read `.agent-repo-config/triage-label.md` and apply the type and entry state from it (`wayfinder` applies the entry state only, and only on a tracker export). When no map was written, those three publish with no triage label.
+Tell the user the setup is complete. `to-tickets` and `implement-spec` read `.agent-repo-config/issue-tracker.md`, which is gitignored. `to-spec` reads it when publishing to the tracker, and writes a local spec when the file is missing. `wayfinder` reads it when the map is exported to the tracker. When a triage map was written, `to-spec`, `wayfinder`, and `to-tickets` also read `.agent-repo-config/triage-label.md` and apply the type and entry state from it on a tracker publish (`wayfinder` applies the entry state only, and only on a tracker export). When no map was written, those three publish with no triage label.
 
 They can edit either file directly. Re-run this skill to switch trackers, or to copy in seed sections the issue tracker file does not have yet. Starting over replaces the issue tracker file with the current seed. Re-running leaves an existing triage map in place. Say "replace the triage map" to draft a new one. Re-running also adds the gitignore line if it is missing.
