@@ -145,7 +145,7 @@
     <strong>Verify and repair the search index</strong>
     <div class="bar-side">
       <span class="pill critical">1 critical</span>
-      <span class="pill important">3 important</span>
+      <span class="pill important">2 important</span>
       <span class="pill">1 minor</span>
       <span class="pill important">2 disagreements</span>
     </div>
@@ -154,7 +154,7 @@
 
 <header class="page wrap">
   <p class="kicker-row">
-    <span class="kicker">Code review · task checkpoint</span>
+    <span class="kicker">Code review · task checkpoint · continued</span>
     <span class="status">Not ready for merge</span>
   </p>
   <h1>Verify and repair the search index</h1>
@@ -199,6 +199,43 @@
 </header>
 
 <main class="wrap">
+  <section>
+    <details class="block" open>
+      <summary>
+        <h2>Since last review <span class="count">1 fixed · 3 still open · 2 new</span></h2>
+      </summary>
+      <div class="body">
+        <p class="sub">No local report for this branch. Prior items are the review comments on <a href="https://github.com/example/search/pull/128">pull request #128</a> at <code>b41c0e2</code>, 18 Nov 2026. This review covers <code>b41c0e2..3df7661</code>, 2 commits. Open items were checked again and were not filed as new.</p>
+        <table>
+          <thead><tr><th>Prior item</th><th>Was</th><th>Now</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>The flags are not discoverable</td>
+              <td><span class="pill important">important</span> <span class="pill">spec gap</span></td>
+              <td><span class="pill pass">fixed</span> <code>cli/index.ts</code> prints <code>--help</code>, including <code>--concurrency</code> and <code>--index</code>.</td>
+            </tr>
+            <tr>
+              <td>Index path is not confined to the data directory</td>
+              <td><span class="pill critical">critical</span> <span class="pill">security</span></td>
+              <td><span class="pill open">still open</span> The same check remains at <code>cli/index.ts:40</code>.</td>
+            </tr>
+            <tr>
+              <td>Invalid dates return no results</td>
+              <td><span class="pill important">important</span> <span class="pill">defect</span></td>
+              <td><span class="pill open">still open</span> The date test still fails.</td>
+            </tr>
+            <tr>
+              <td>The CLI reaches into indexer internals</td>
+              <td><span class="pill important">important</span> <span class="pill">design</span></td>
+              <td><span class="pill open">still open</span> The two judgments remain.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="sub">New in this review: nothing asserts a path outside the data directory, and the progress interval is a bare number.</p>
+      </div>
+    </details>
+  </section>
+
   <section>
     <details class="block">
       <summary>
@@ -359,7 +396,7 @@ Suggestion: Leave the call path. Drop the extra import only if you are already e
 
   <section class="findings" id="findings">
     <div class="section-head">
-      <h2>Findings <span class="count">5</span></h2>
+      <h2>Findings <span class="count">4</span></h2>
       <button class="icon-copy" type="button" data-copy-group="findings" title="Copy all findings" aria-label="Copy all findings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </div>
 
@@ -392,7 +429,7 @@ Suggestion: Resolve the path and reject anything that does not stay under the da
     </article>
 
     <div class="sev">
-      <h2>Important <span class="count">3</span></h2>
+      <h2>Important <span class="count">2</span></h2>
       <button class="icon-copy" type="button" data-copy-group="important" title="Copy important findings" aria-label="Copy important findings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </div>
 
@@ -419,28 +456,7 @@ A date that is not ISO is treated as an empty search, so a bad argument looks li
 Suggestion: Validate the format and throw, with a YYYY-MM-DD example.</script>
     </article>
 
-    <article class="finding" data-group="important">
-      <header>
-        <div class="badges">
-          <span class="pill important">important</span>
-          <span class="pill">spec gap</span>
-          <span class="pill from">from Code reviewer</span>
-        </div>
-        <button class="icon-copy" type="button" title="Copy this finding" aria-label="Copy this finding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-      </header>
-      <h3>The flags are not discoverable</h3>
-      <p class="loc">cli/index.ts:1-31</p>
-      <p>There is no <code>--help</code>. The plan says the flags must be discoverable. <code>--concurrency</code> exists only if the caller already knows it.</p>
-      <p class="suggestion"><span>Suggestion</span> Print usage, including <code>--concurrency</code> and <code>--index</code>.</p>
-      <script type="text/plain" class="payload">**Important · spec gap** `cli/index.ts:1-31`
-From: Code reviewer
-
-The flags are not discoverable
-
-There is no `--help`. The plan says the flags must be discoverable. `--concurrency` exists only if the caller already knows it.
-
-Suggestion: Print usage, including `--concurrency` and `--index`.</script>
-    </article>
+    
 
     <article class="finding" data-group="important">
       <header>

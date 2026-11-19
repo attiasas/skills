@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent doctor · skills</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: light-dark(#1c1c1c, #eceae4);
+    --muted: light-dark(#5c5a55, #b3b0a8);
+    --bg: light-dark(#f6f5f1, #121212);
+    --panel: light-dark(#fff, #1c1c1b);
+    --line: light-dark(#e4e1d8, #333330);
+    --accent: light-dark(#2f5bd3, #8aa8ff);
+    --pass-bg: light-dark(#e5f4e8, #1d3a26);
+    --pass-fg: light-dark(#1d5a2e, #bfe8cb);
+    --warn-bg: light-dark(#fff1d6, #4a3912);
+    --warn-fg: light-dark(#7a5200, #f3dca6);
+    --bad-bg: light-dark(#fde8e6, #4a2220);
+    --bad-fg: light-dark(#8a1f16, #f6c7c2);
+    --chip: light-dark(#f3f1eb, #2a2a28);
+    --shadow: light-dark(0 1px 2px rgba(28, 28, 28, .04), none);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.5 -apple-system, system-ui, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  :not(pre) > code { background: var(--chip); padding: 0 .28rem; border-radius: 4px; font-size: .86em; }
+  a { color: var(--accent); }
+  .wrap { width: min(820px, calc(100% - 2rem)); margin: 0 auto; }
+  .bar {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .wrap { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .6rem 0; }
+  .bar strong { font-size: .92rem; }
+  .bar-side { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: flex-end; }
+  header.page { padding: 1.4rem 0 .4rem; }
+  .kicker { margin: 0; color: var(--muted); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; }
+  h1 { margin: .3rem 0 .35rem; font-size: 1.7rem; line-height: 1.15; letter-spacing: -.02em; }
+  .lede { margin: 0 0 1rem; max-width: 68ch; color: var(--muted); }
+  .meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: .55rem; margin: 0; padding: 0; list-style: none; }
+  .meta li { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .55rem .7rem; box-shadow: var(--shadow); }
+  .meta span { display: block; color: var(--muted); font-size: .72rem; letter-spacing: .03em; text-transform: uppercase; }
+  .meta strong { font-size: .9rem; font-weight: 600; }
+  section { margin: 1.1rem 0; }
+  details.block {
+    border: 1px solid var(--line); border-radius: 12px;
+    background: var(--panel); box-shadow: var(--shadow);
+  }
+  details.block > summary {
+    cursor: pointer; list-style: none;
+    display: flex; gap: .6rem; align-items: center;
+    padding: .8rem 1rem;
+  }
+  details.block > summary::-webkit-details-marker { display: none; }
+  details.block > summary::after { content: "\25B8"; color: var(--muted); }
+  details.block[open] > summary::after { content: "\25BE"; }
+  details.block > summary:hover h2 { color: var(--accent); }
+  details.block h2 { margin: 0; font-size: 1.05rem; flex: 1; }
+  details.block .count { color: var(--muted); font-size: .82rem; font-weight: 450; }
+  details.block .body { padding: 0 1rem .95rem; }
+  details.block .about { margin-top: 0; }
+  .about { margin: .3rem 0 .7rem; max-width: 68ch; color: var(--muted); }
+  .card, .top {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--shadow); padding: .85rem 1rem .95rem; margin: .55rem 0 0;
+  }
+  .card header, .top { display: block; }
+  .card header { display: flex; justify-content: space-between; gap: .6rem; align-items: flex-start; }
+  .card h3 { margin: 0; font-size: 1rem; line-height: 1.35; }
+  .badges { display: flex; flex-wrap: wrap; gap: .3rem; justify-content: flex-end; flex: 0 0 auto; }
+  .pill {
+    display: inline-block; padding: .05rem .45rem; border-radius: 999px;
+    background: var(--chip); color: var(--muted); font-size: .72rem; font-weight: 650; white-space: nowrap;
+  }
+  .pill.p1, .pill.fail { background: var(--bad-bg); color: var(--bad-fg); }
+  .pill.p2, .pill.warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .pill.p3, .pill.ok { background: var(--pass-bg); color: var(--pass-fg); }
+  .label {
+    display: block; margin: .7rem 0 .15rem;
+    color: var(--muted); font-size: .7rem; font-weight: 650;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .card p, .top p { margin: 0; }
+  .todo, .know {
+    margin-top: .75rem; padding: .6rem .7rem; border-radius: 8px;
+  }
+  .todo { background: var(--chip); }
+  .know { background: transparent; border: 1px dashed var(--line); }
+  .todo .label, .know .label { margin-top: 0; }
+  .todo .n { color: var(--accent); font-weight: 700; margin-right: .35rem; }
+  ol.week { margin: 0; padding: 0; list-style: none; }
+  ol.week li { display: grid; grid-template-columns: 1.5rem 1fr; gap: .15rem .55rem; }
+  ol.week .n { color: var(--accent); font-weight: 700; grid-row: span 2; }
+  ol.week .why { color: var(--muted); font-size: .88rem; }
+  .okline { margin: .55rem 0 0; color: var(--muted); font-size: .88rem; }
+  .sample { margin: 0 0 2.5rem; color: var(--muted); font-size: .8rem; }
+  @media (max-width: 720px) {
+    .meta { grid-template-columns: 1fr 1fr; }
+    .card header { display: block; }
+    .badges { justify-content: flex-start; margin-top: .4rem; }
+  }
+  @media print {
+    .bar { position: static; backdrop-filter: none; }
+    body { background: #fff; color: #1c1c1c; }
+    .card, .top, .meta li { box-shadow: none; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="wrap">
+    <strong>skills</strong>
+    <div class="bar-side">
+      <span class="pill fail">2 fail</span>
+      <span class="pill warn">3 warn</span>
+      <span class="pill ok">11 ok</span>
+      <span class="pill">6 to do</span>
+    </div>
+  </div>
+</div>
+
+<header class="page wrap">
+  <p class="kicker">Agent doctor · last 30 days</p>
+  <h1>skills</h1>
+  <p class="lede">What the last 18 chats and this machine's setup show. Each item is something to know. A numbered to-do is the change worth making from it. Reply with a number to apply that one.</p>
+  <ul class="meta">
+    <li><span>Chats read</span><strong>18</strong></li>
+    <li><span>Window</span><strong>20 Oct – 19 Nov</strong></li>
+    <li><span>About</span><strong>inferred from git</strong></li>
+    <li><span>Fallback</span><strong>not needed</strong></li>
+  </ul>
+</header>
+
+<main class="wrap">
+
+<section>
+  <details class="block" open>
+    <summary>
+      <h2>This week</h2>
+      <span class="count">3</span>
+    </summary>
+    <div class="body">
+      
+      <p class="about">The three to-dos that pay off before the others. Each one is spelled out in the section it came from.</p>
+      <ol class="week">
+        <li class="top">
+          <span class="n">1</span>
+          <div>
+            <a href="#jira"><strong>T1 · Reconnect the Jira server</strong></a>
+            <p class="why">Ticket lookups failed in the last two weeks and the chats guessed instead.</p>
+          </div>
+        </li>
+        <li class="top">
+          <span class="n">2</span>
+          <div>
+            <a href="#repo-map"><strong>T2 · Stop loading the architecture tour on every turn</strong></a>
+            <p class="why">640 lines the agent can read from the repo when it needs them.</p>
+          </div>
+        </li>
+        <li class="top">
+          <span class="n">3</span>
+          <div>
+            <a href="#pr-body"><strong>T3 · Write the pull-request rule down once</strong></a>
+            <p class="why">You restated the same three constraints in 6 chats.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </details>
+</section>
+
+<section>
+  <details class="block" open>
+    <summary>
+      <h2>Checkup</h2>
+      <span class="count">2 fail · 3 warn</span>
+    </summary>
+    <div class="body">
+      
+      <p class="about">The Cursor setup on this machine and in this workspace. A fail is broken now. A warn works, and costs something. Passing checks are counted at the end.</p>
+
+      <article class="card" id="jira">
+        <header>
+          <h3>Jira MCP server does not connect</h3>
+          <span class="badges"><span class="pill fail">Fail</span><span class="pill p1">P1 · High</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p><code>agent mcp list</code> reports <code>user-workato-jira</code> as errored: authentication expired. The server is in <code>~/.cursor/mcp.json</code>. No token is printed here.</p>
+        <span class="label">Evidence</span>
+        <p>Seen in 7 of 18 chats. Each one stopped at "could not reach Jira" and described the ticket from memory.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T1</span></span>
+          <p>Re-authenticate that server. Nothing in the repo changes. Confirm and I will run the login, not edit the file.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3><code>hooks.json</code> does not parse</h3>
+          <span class="badges"><span class="pill fail">Fail</span><span class="pill p1">P1 · High</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p><code>.cursor/hooks.json</code> fails JSON parse: trailing comma at line 14. Cursor ignores the whole file, so the format hook on save never runs.</p>
+        <span class="label">Evidence</span>
+        <p><code>python -m json.tool .cursor/hooks.json</code> exits 1 with that line. The script it points at exists and is executable.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T4</span></span>
+          <p>Delete the comma after the last entry in the <code>afterFileEdit</code> array. One character in <code>.cursor/hooks.json</code>.</p>
+        </div>
+      </article>
+
+      <article class="card" id="repo-map">
+        <header>
+          <h3>Always-loaded rules are 1,140 lines</h3>
+          <span class="badges"><span class="pill warn">Warn</span><span class="pill p1">P1 · High</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>Nine rule files apply on every turn. <code>~/.cursor/rules/repo-map.mdc</code> is 640 of them: a directory tree, the dependency list, and a tour of each package. The agent can get all three from the repo. The pitfalls at the bottom of that file cannot.</p>
+        <span class="label">Evidence</span>
+        <p>Line counts from the files. The tree in the rule matches <code>find</code> today, so it is also going stale.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T2</span></span>
+          <p>Move the tree, the dependency list, and the tour out of <code>repo-map.mdc</code>. Keep the pitfalls, about 40 lines. Do not turn the tour into a skill. It is reference, and the agent should read the repo.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3><code>agent</code> is on PATH twice</h3>
+          <span class="badges"><span class="pill warn">Warn</span><span class="pill p3">P3 · Low</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p><code>which -a agent</code> prints <code>~/.local/bin/agent</code> twice. Both resolve to the same binary, version 2026.02.27. <code>cursor</code> is not on PATH.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>No change. A duplicate PATH entry that points at one binary does not change which CLI runs.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Allow rule covers every shell command</h3>
+          <span class="badges"><span class="pill warn">Warn</span><span class="pill p2">P2 · Medium</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p><code>~/.cursor/cli-config.json</code> allows <code>Shell(**)</code>. That skips the prompt for writes and network as well as reads. Nothing in the file says this was meant to be that wide.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T5</span></span>
+          <p>Replace <code>Shell(**)</code> with the read-only commands you actually run unattended: <code>git status</code>, <code>git diff</code>, <code>git log</code>, and test commands. Leave writes to ask.</p>
+        </div>
+      </article>
+
+      <p class="okline">11 checks passed. Signed in. The other three config files parse. 24 skills have valid frontmatter. Both hook scripts exist and pass a syntax check. Sandbox mode is the default.</p>
+    </div>
+  </details>
+</section>
+
+<section>
+  <details class="block" open>
+    <summary>
+      <h2>Knowledge</h2>
+      <span class="count">3</span>
+    </summary>
+    <div class="body">
+      
+      <p class="about">A correction or explanation you gave more than once. The action, when there is one, is to write it down once so the next chat already knows it.</p>
+
+      <article class="card" id="pr-body">
+        <header>
+          <h3>A pull request names the spec item each change serves</h3>
+          <span class="badges"><span class="pill p1">P1 · High</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>The body has three constraints you keep repeating: one paragraph on why, each change traced to a spec item, and no generated file list.</p>
+        <span class="label">Evidence</span>
+        <p>6 chats. On 2 Nov you sent back a drafted body with "say which acceptance criterion this serves, and drop the file list."</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T3</span></span>
+          <p>Add <code>.cursor/rules/pull-requests.mdc</code>, always applied, with those three lines and nothing else.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Tests go through the public interface</h3>
+          <span class="badges"><span class="pill p2">P2 · Medium</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>You reject a test that calls an unexported function or reads a private field. The assertion has to be something a caller could do.</p>
+        <span class="label">Evidence</span>
+        <p>4 chats. On 11 Nov a test imported <code>parseInternal</code> and you said to drive it through <code>search()</code> instead.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>The <code>tdd</code> skill already says this. A second rule would repeat it. Use the skill, and skip the rule.</p>
+        </div>
+      </article>
+
+      <article class="card" id="gen">
+        <header>
+          <h3>Nothing under <code>gen/</code> is hand-edited</h3>
+          <span class="badges"><span class="pill p2">P2 · Medium</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p><code>gen/</code> is produced by <code>make gen</code>. An edit there is overwritten on the next generation, and you have had to revert three of them.</p>
+        <span class="label">Evidence</span>
+        <p>3 chats, each after the agent patched a file in <code>gen/</code> to fix a type error that belonged in the source.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T6</span></span>
+          <p>Add <code>.cursor/rules/generated.mdc</code>, scoped to <code>gen/**</code>: do not edit these files, change the source and run <code>make gen</code>.</p>
+        </div>
+      </article>
+    </div>
+  </details>
+</section>
+
+<section>
+  <details class="block" open>
+    <summary>
+      <h2>Skills</h2>
+      <span class="count">3</span>
+    </summary>
+    <div class="body">
+      
+      <p class="about">A job of several steps you asked for more than once. The action is a skill that runs those steps, or a note that one you already have covers it.</p>
+
+      <article class="card">
+        <header>
+          <h3>Cut a release</h3>
+          <span class="badges"><span class="pill p2">P2 · Medium</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>When you say "cut the release", the steps that actually happened are: <code>git log</code> since the last tag, draft notes with the first line left for you, <code>gh release create --draft</code>, and stop before publishing.</p>
+        <span class="label">Evidence</span>
+        <p>5 chats, one per release. The commands were the same. The notes wording took three rounds each time.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T7</span></span>
+          <p>A user-invoked skill <code>cut-release</code> with those four steps, and the notes template leaving the first line blank. That is the part you rewrite anyway.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Triage a flaky CI check before touching code</h3>
+          <span class="badges"><span class="pill p3">P3 · Low</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>You ask for the same sequence: find the failing check, read its last runs, and say whether the failure is in this diff or already on main. Only then change code.</p>
+        <span class="label">Evidence</span>
+        <p>4 chats. The sequence matches what already happened, including the "do not edit yet" stop.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>The ci-investigator subagent does this. Ask for it by name next time. No new skill.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Bring local infra up, then run the one failing suite</h3>
+          <span class="badges"><span class="pill p3">P3 · Low</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>The steps were <code>docker compose up -d postgres redis</code>, wait for the health checks, then the single test command from the failure. The container names were the part that went wrong.</p>
+        <span class="label">Evidence</span>
+        <p>3 chats. In two of them the first attempt used <code>db</code> instead of <code>postgres</code>.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>Three times is thin for a skill. The names are <code>postgres</code> and <code>redis</code>. Revisit if it happens again.</p>
+        </div>
+      </article>
+    </div>
+  </details>
+</section>
+
+<section>
+  <details class="block" open>
+    <summary>
+      <h2>Subagents</h2>
+      <span class="count">2</span>
+    </summary>
+    <div class="body">
+      
+      <p class="about">A part of those jobs that reads a lot, or that can run on its own. The action is to split it off, and whether a cheaper model is enough.</p>
+
+      <article class="card">
+        <header>
+          <h3>Scan the last 20 CI runs</h3>
+          <span class="badges"><span class="pill p2">P2 · Medium</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>Read-only. It lists the failing check's recent runs and returns one line each: date, sha, pass or fail, and the first error line. A cheaper model is enough. The main chat only needs the tally.</p>
+        <span class="label">Evidence</span>
+        <p>This read was most of the length of the 4 triage chats. The conclusion was never more than a few lines.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T8</span></span>
+          <p>On the next flaky check, dispatch this as its own read-only subagent on a cheaper model before reasoning about the cause.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Draft release notes from the commits</h3>
+          <span class="badges"><span class="pill p3">P3 · Low</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>Writes one file. A cheaper model can list the commits under the headings you use. It cannot write the first line: you rewrote that line in all 5 release chats.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>Fold the draft into T7 and leave the first line blank. A separate subagent saves little, because the draft is short and you redo the opening.</p>
+        </div>
+      </article>
+    </div>
+  </details>
+</section>
+
+<section>
+  <details class="block" open>
+    <summary>
+      <h2>Surprising</h2>
+      <span class="count">3</span>
+    </summary>
+    <div class="body">
+      
+      <p class="about">A pattern you are unlikely to see from inside a single chat. A time sink, a repeated mistake, or something you keep re-explaining. An action only when one is concrete.</p>
+
+      <article class="card">
+        <header>
+          <h3>The <code>gen/</code> correction never sticks</h3>
+          <span class="badges"><span class="pill p1">P1 · High</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>The same explanation shows up after the damage, not before it. Each time the agent edited <code>gen/</code>, you explained the rule, and the next chat edited it again.</p>
+        <span class="label">Evidence</span>
+        <p>4 chats. The explanation is nearly word for word. None of them ended with the rule being written down.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>This is the same fact as the knowledge item above. T6 is the action. The extra information is that explaining it in chat has not worked.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Release time goes to the first line, not the steps</h3>
+          <span class="badges"><span class="pill p2">P2 · Medium</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>Across the 5 release chats, the commands were settled in one round. The notes went three rounds, and every round was about the opening sentence.</p>
+        <div class="know">
+          <span class="label">Just know</span>
+          <p>A skill that automates the commands (T7) does not touch the part that actually costs the time. Leaving that line blank is the whole win.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h3>Plans get restarted the same day</h3>
+          <span class="badges"><span class="pill p3">P3 · Low</span></span>
+        </header>
+        <span class="label">Info</span>
+        <p>Three times you asked for a plan, then opened a new chat that same day and asked for it again. The first plan was only in the transcript.</p>
+        <span class="label">Evidence</span>
+        <p>8 Nov, 14 Nov, and 18 Nov. The second chat did not have the first one's file, because there was no file.</p>
+        <div class="todo">
+          <span class="label">To do <span class="n">T9</span></span>
+          <p>When a chat produces a plan, write it under <code>.agent-docs/</code> before the chat ends. The next chat starts from the file.</p>
+        </div>
+      </article>
+    </div>
+  </details>
+</section>
+
+<p class="sample">Sample data, for layout only. The real report is written to <code>.agent-docs/agent-doctor/report.html</code>.</p>
+</main>
+</body>
+</html>

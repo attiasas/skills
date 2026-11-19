@@ -1,138 +1,145 @@
 ---
 name: diagnosing-bugs
-description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", or reports something broken/throwing/failing/slow.
+description: Finds the cause of a hard bug or a performance regression with a failing loop before any theory, then fixes it and writes a report whose manual replication and manual validation are the fewest steps that show the bug and the fix, each with the command and its output. Use when the user says "diagnose" or "debug this", or reports something broken, throwing, failing, or slow.
 ---
 
-# Diagnosing Bugs
+# Diagnosing bugs
 
-A discipline for hard bugs. Skip phases only when explicitly justified.
+A hard bug or a slow path. Get one command that fails on this symptom, find which change makes that command pass, then show the human the shortest way to see the bug and the shortest way to see the fix.
 
-When exploring the codebase, read `GLOSSARY.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
+Dispatch a general-purpose subagent, one seat at a time, and wait for it. Start each with a fresh context window. Use the model the human named. Otherwise use the default model. Fill the brief in [seats.md](seats.md). Send the symptom and the inputs that brief names.
+
+Fix unless the human asked only for the cause. Write the report either way.
 
 ## Redact
 
-This skill has you show commands, outputs and captured artifacts. **Redact every secret first**: write `<REDACTED>` in its place. Build loops against env vars, so the credential stays in the environment rather than in what you show. Captured artifacts carry auth headers: quote only the lines that carry the signal.
+Commands, outputs, and captured files get shown. Replace every secret with `<REDACTED>` before it appears in chat or on the page. Quote the lines that carry the signal. When the redacted output is not enough, say so and ask.
 
-If the redacted output is not enough to diagnose the bug, say so and ask the user.
+## 1. Symptom
 
-## Phase 1: Build a feedback loop
+Write the failure in the human's words, one line: what they did, what they saw, what they expected. That line is what the loop must catch. A nearby error is a different bug.
 
-**This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug (one that goes red on _this_ bug), you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
+## 2. Loop
 
-Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
+Dispatch **Loop**. It builds and runs one command that goes red on this symptom, then shrinks the repro until every remaining part is load-bearing.
 
-### Ways to construct one, in roughly this order
+The next step waits until that command has gone red in this session, and it is:
 
-1. **Failing test** at whatever seam reaches the bug: unit, integration, e2e.
-2. **Curl / HTTP script** against a running dev server.
-3. **CLI invocation** with a fixture input, diffing stdout against a known-good snapshot.
-4. **Headless browser script** (Playwright / Puppeteer) that drives the UI and asserts on DOM/console/network.
-5. **Replay a captured trace.** Save a real network request / payload / event log to disk; replay it through the code path in isolation.
-6. **Throwaway harness.** Spin up a minimal subset of the system (one service, mocked deps) that exercises the bug code path with a single function call.
-7. **Property / fuzz loop.** If the bug is "sometimes wrong output", run 1000 random inputs and look for the failure mode.
-8. **Bisection harness.** If the bug appeared between two known states (commit, dataset, version), automate "boot at state X, check, repeat" so you can `git bisect run` it.
-9. **Differential loop.** Run the same input through old-version vs new-version (or two configs) and diff outputs.
-10. **HITL bash script.** Last resort. If a human must click, drive _them_ with `scripts/hitl-loop.template.sh` so the loop is still structured. Captured output feeds back to you.
+- **This bug.** It drives the failing path and the output contains the symptom in the human's words. "It ran" is not red.
+- **Steady.** Same verdict each run. For a flake, a pinned rate high enough to debug against.
+- **Fast.** Seconds.
+- **Unattended.** You can run it. A person clicks only through a copy of [scripts/hitl-loop.template.sh](scripts/hitl-loop.template.sh), and only while the loop is being built.
 
-Build the right feedback loop, and the bug is 90% fixed.
+When no such command exists, status is Still open. List what Loop tried, each command with its output. Ask for an environment that reproduces it, a redacted capture, or permission to instrument production. Stop.
 
-### Tighten the loop
+## 3. Cause
 
-Treat the loop as a product. Once you have _a_ loop, **tighten** it:
+Dispatch **Cause** with the symptom and the red command. It returns 3 to 5 ranked hypotheses. Each one states the prediction: if this is the cause, this change makes the loop go green, or this other change makes it worse.
 
-- Can I make it faster? (Cache setup, skip unrelated init, narrow the test scope.)
-- Can I make the signal sharper? (Assert on the specific symptom, not "didn't crash".)
-- Can I make it more deterministic? (Pin time, seed RNG, isolate filesystem, freeze network.)
+Show the ranked list. Apply a re-rank if the human sends one. When the human is away, probe the ranking Cause returned.
 
-A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is tight, a debugging superpower.
+Dispatch **Probe** with that list and the red command. One variable at a time. Each probe maps to one prediction. A slow bug is a timing command and a bisection.
 
-### Non-deterministic bugs
+Tag every debug log `[DEBUG-` plus four letters. Cleanup greps that prefix.
 
-The goal is not a clean repro but a **higher reproduction rate**. Loop the trigger 100×, parallelise, add stress, narrow timing windows, inject sleeps. A 50%-flake bug is debuggable; 1% is not, so keep raising the rate until it's debuggable.
+## 4. Fix
 
-### When you genuinely cannot build a loop
+Skip this step when the human asked only for the cause.
 
-Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a redacted captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.
+A correct seam exercises the bug the way the caller hits it. When no correct seam exists, say so in the report under Checks and leave the test unwritten.
 
-### Completion criterion: a tight loop that goes red
+When a seam exists and Loop has not already left a red test there, call `tdd`. The one behaviour is the minimised repro. The test name and the assertion use the human's words for the symptom, so the test output is readable as the bug. Watch it fail for this symptom, then pass.
 
-Phase 1 is done when the loop is **tight** and **red-capable**: you can name **one command** (a script path, a test invocation, a curl) that you have **already run at least once** (show the invocation and its output, redacted), and that is:
+When Loop already left that red test, run it, confirm the failure is this symptom, and make it pass.
 
-- [ ] **Red-capable**: it drives the actual bug code path and asserts the **user's exact symptom**, so it can go red on this bug and green once fixed. Not "runs without erroring"; it must be able to _catch this specific bug_.
-- [ ] **Deterministic**: same verdict every run (flaky bugs: a pinned, high reproduction rate, per above).
-- [ ] **Fast**: seconds, not minutes.
-- [ ] **Agent-runnable**: you can run it unattended; a human in the loop only via `scripts/hitl-loop.template.sh`.
+Loop records the command from before the shrink. Step 6 runs that original command again.
 
-If you catch yourself reading code to build a theory before this command exists, **stop: jumping straight to a hypothesis is the exact failure this skill prevents.** No red-capable command, no Phase 2.
+## 5. Cleanup
 
-## Phase 2: Reproduce + minimise
+Before validation:
 
-Run the loop. Watch it go red as the bug appears.
+- Grep every `[DEBUG-` prefix and remove those lines.
+- Delete throwaway prototypes. Keep the red-then-green test, and keep a one-command wrapper only when the manual steps need it.
+- The confirmed hypothesis is the Cause section of the report. When the human asks to commit, the message uses that sentence.
 
-Confirm:
+## 6. Validate
 
-- [ ] The loop produces the failure mode the **user** described, not a different failure that happens to be nearby. Wrong bug = wrong fix.
-- [ ] The failure is reproducible across multiple runs (or, for non-deterministic bugs, reproducible at a high enough rate to debug against).
-- [ ] You have captured the exact symptom (error message, wrong output, slow timing) so later phases can verify the fix actually addresses it.
+Dispatch **Validation**. It re-runs the Loop command and the regression test. It writes **Manual replication** and **Manual validation**. It does not edit source and it does not commit.
 
-### Minimise
+Copy those two lists into the report. Send the list back when it breaks a rule below. One return.
 
-Once it's red, shrink the repro to the **smallest scenario that still goes red**. Cut inputs, callers, config, data, and steps **one at a time**, re-running the loop after each cut, and keep only what's load-bearing for the failure.
+Both lists follow these rules:
 
-Why bother: a minimal repro shrinks the hypothesis space in Phase 3 (fewer moving parts left to suspect) and becomes the clean regression test in Phase 5.
+- One pasteable block when one command can show the result. The block starts with `cd` to the directory. The same block exits non-zero while the bug is present and zero once it is gone. Its output contains the symptom, or the fixed result, in the human's words (the message, the status, the number, or the time).
+- Manual validation is that same block. A second procedure means send it back.
+- More than one step only when one command cannot show the result. Then the fewest actions, one action per step: one command, one click, or one line to paste.
+- The first step names the directory. Every command is complete. A value the human would have to invent means send it back.
+- Drop a step that is not load-bearing. If the result still shows without it, it is not on the list.
+- A click path is numbered, one click per step, with the URL in the step. The report names the hitl script only as how the loop was built.
 
-Done when **every remaining element is load-bearing**: removing any one of them makes the loop go green.
+A person with the repo and nothing else can follow the list.
 
-Do not proceed until you have reproduced **and** minimised.
+## 7. Report
 
-## Phase 3: Hypothesise
+Write the report in chat, in this order.
 
-Generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.
+1. **Status.** `Fixed`, `Cause found`, or `Still open`.
+2. **Symptom.** The line from step 1.
+3. **Cause.** The confirmed hypothesis, the file and line, and the prediction that held. When none is confirmed, "No cause yet."
+4. **Manual replication.** The steps, what the bug looks like, and the redacted output from when it was red.
+5. **Manual validation.** The same steps, what fixed looks like, and the output of the run after the fix. When the fix is not in, the steps stay and the result is Not run.
+6. **Loop.** The command, the directory, who ran it, and the redacted output.
+7. **Triage.** Each hypothesis: confirmed, ruled out, or open, with the evidence.
+8. **Checks.** Each command: pass, fail, or gap, the output, and who ran it.
+9. **Cleanup.** The grep and its result.
 
-Each hypothesis must be **falsifiable**: state the prediction it makes.
+Then write `.agent-docs/diagnosis-<slug>.html` in the repo under diagnosis, following [report-example.html](report-example.html). The slug is 2 to 4 kebab-case words from the symptom. Do not edit the example. Self-contained, no external assets. Each section is a collapsible block, open to start. The status pill uses `fixed`, `found`, or `open`. Each paste block has a Copy button. Before the first write, add `.agent-docs/` to `.git/info/exclude` when no ignore rule already covers it. Do not touch `.gitignore`. Open the page with `open`. There is no server.
 
-> Format: "If <X> is the cause, then <changing Y> will make the bug disappear / <changing Z> will make it worse."
+The page carries the same sections as the chat. The chat stays complete.
 
-If you cannot state the prediction, the hypothesis is a vibe: discard or sharpen it.
+## Triage
 
-**Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Cheap checkpoint, big time saver. Don't block on it; proceed with your ranking if the user is AFK.
+| Disposition | Meaning |
+| --- | --- |
+| confirmed | The prediction held. The loop moved the way that hypothesis said. |
+| ruled out | The prediction failed. |
+| open | Not tested, or the evidence does not decide. |
 
-## Phase 4: Instrument
+One confirmed hypothesis is the cause. Two confirmed means Probe has not separated them; probe again before the report. Evidence is a command and its output, or a file and line.
 
-Each probe must map to a specific prediction from Phase 3. **Change one variable at a time.**
+## Checks
 
-Tool preference:
+| Result | Meaning |
+| --- | --- |
+| pass | The command ran and the output is the fixed result, or the test passed. |
+| fail | The command ran and the bug is still there. |
+| gap | The command has not been run. Manual replication or manual validation is that command. |
 
-1. **Debugger / REPL inspection** if the env supports it. One breakpoint beats ten logs.
-2. **Targeted logs** at the boundaries that distinguish hypotheses.
-3. Never "log everything and grep".
+`Fixed` requires the original loop to pass and, when a seam exists, the regression test to pass. A gap or a fail on either one keeps the status at `Cause found`.
 
-**Tag every debug log** with a unique prefix, e.g. `[DEBUG-a4f2]`. Cleanup at the end becomes a single grep. Untagged logs survive; tagged logs die.
+## Never
 
-**Perf branch.** For performance regressions, logs are usually wrong. Instead: establish a baseline measurement (timing harness, `performance.now()`, profiler, query plan), then bisect. Measure first, fix second.
+- Dispatch Cause before a red command exists
+- Send Cause or Probe this session's theory
+- Probe before the ranked list was shown
+- Treat a nearby failure as this bug
+- Add a test that cannot catch this symptom
+- Leave a `[DEBUG-` line in the tree
+- Leave a placeholder, a secret, or "check that it works" in either manual list
+- Write manual validation as a different procedure
+- Treat a sentence with no command as a pass
+- Skip the page
+- Touch `.gitignore` to hide the page
 
-## Phase 5: Fix + regression test
+## Rationalizations
 
-Write the regression test **before the fix**, but only if there is a **correct seam** for it.
-
-A correct seam is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
-
-**If no correct seam exists, that itself is the finding.** Note it. The codebase architecture is preventing the bug from being locked down. Flag this for the next phase.
-
-If a correct seam exists:
-
-1. Turn the minimised repro into a failing test at that seam.
-2. Watch it fail. If you forced the red by mutating code or a fixture, `diff` against a pristine copy to prove the mutation landed before you trust it.
-3. Apply the fix.
-4. Watch it pass.
-5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
-
-## Phase 6: Cleanup
-
-Required before declaring done:
-
-- [ ] Original repro no longer reproduces (re-run the Phase 1 loop)
-- [ ] Regression test passes (or absence of seam is documented)
-- [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
-- [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
-- [ ] The hypothesis that turned out correct is stated in the commit / PR message, so the next debugger learns
+| Excuse | Reality |
+| --- | --- |
+| "I can see the cause, so skip the loop." | The loop is what makes the cause checkable. No red command, no Cause seat. |
+| "They want the fix now." | The same command that goes red is what shows the fix. |
+| "A unit test nearby is close enough." | The command has to catch this symptom, in the human's words. |
+| "The steps are obvious." | Manual replication is the fewest actions, written out, with the exact thing they see. |
+| "I'll describe how to tell it's fixed." | Manual validation is those same steps and the exact green result. |
+| "One hypothesis is enough." | Rank 3 to 5 and show them before Probe. |
+| "The logs will show it." | Tag `[DEBUG-` and grep the prefix out before the report. |
+| "The test output is enough for the human." | The manual output contains the symptom they reported. When the test output would not, the manual command is the one-command wrapper that prints it. |

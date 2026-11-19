@@ -1,6 +1,6 @@
 ---
 name: code-review-request
-description: Dispatches a fresh-context review of completed work, adding a specialist only when the diff matches that lens, and runs a validation pass that records each command and its output. Use when finishing a task, a major feature, or before merging. Writes the HTML report only when asked, and posts pull-request comments only after a yes in chat.
+description: Dispatches a fresh-context review of completed work, adding a specialist only when the diff matches that lens, and runs a validation pass that records each command and its output. Use when finishing a task, a major feature, before merging, or when reviewing again after an earlier review. A follow-up accounts for the previous report and writes the HTML page without asking. A first review writes HTML only when asked. Pull-request comments are posted only after a yes in chat.
 ---
 
 # Request a code review
@@ -17,9 +17,16 @@ Use the **before-merge** bar after a major feature and before a merge.
 
 Pin the base and the head. Read `git diff --stat <base>..<head>` and `git rev-list --count <base>..<head>`. Record the branch, the base it comes from, and the commit count. Record a pull request link when one exists, and an issue link when the work names one.
 
+Look for a previous review. Do not ask which source to use.
+
+1. The latest `.agent-docs/code-review-*.html` in the repo under review whose head is an ancestor of the current head.
+2. When no local page matches, and a pull request exists, the review comments on that pull request. Use the latest review submitted on a commit that is an ancestor of the current head. A comment that is not a finding is not a prior item.
+
+When neither source has a prior review, this is a first review. A missing or deleted local page does not make it a first review while those pull-request comments exist.
+
 ## Seats
 
-Dispatch every matching seat in one turn, plus validation. Use a general-purpose subagent and a fresh context. Fill [seats.md](seats.md).
+Dispatch every matching seat in one turn, plus validation. Use a general-purpose subagent and a fresh context. Fill [seats.md](seats.md). On a follow-up, send each seat the previous head and every prior finding, disagreement, and failed or gap check.
 
 | Seat | Dispatch when |
 | --- | --- |
@@ -43,6 +50,8 @@ On the before-merge bar, every observable acceptance criterion needs a real comm
 
 A sentence with no command is a gap. A manual validation is one command from a named directory, what it covers, what a pass looks like, and who ran it. A run includes the output.
 
+On a follow-up, validation re-runs the checks that failed or were gaps. A prior finding is fixed, still open, or gone. A fixed item is not filed again. A still-open item stays a finding. An item that was not in the previous report is new.
+
 ## Aggregate
 
 Wait for every seat you dispatched.
@@ -59,11 +68,13 @@ The status line is `Not ready for merge`, `Ready with fixes`, or `Ready for merg
 
 ## Report
 
-Write the report in chat, in this order: mode and status, range, a two-or-three-line summary with strengths and risks, roster, acceptance status, manual validations, disagreements, findings. Group findings critical, then important, then minor. Omit an empty severity.
+Write the report in chat, in this order: mode and status, range, a two-or-three-line summary with strengths and risks, since last review, roster, acceptance status, manual validations, disagreements, findings. Group findings critical, then important, then minor. Omit an empty severity.
+
+On a follow-up, since last review names where the prior items came from, the local page or the pull request review, and the range from that head to this one. Each prior item is fixed, still open, or gone, with the evidence. Then name the new findings. Omit the section on a first review.
 
 Each finding and each disagreement has severity, type, the seat it is from, a title, the file, what is wrong, and a suggestion. Types are defect, spec gap, design, security, data, contract, and test gap.
 
-Write the HTML page only when they ask. Put it at `.agent-docs/code-review-<short-sha>.html` in the repo under review, following [report-example.html](report-example.html). Do not edit the example. Open the page with `open`. There is no server.
+On a follow-up, write and open the HTML page without asking. On a first review, write it only when they ask. Put it at `.agent-docs/code-review-<short-sha>.html` in the repo under review, following [report-example.html](report-example.html). Do not edit the example. Open the page with `open`. There is no server.
 
 ## Act
 
@@ -77,5 +88,8 @@ When the review is a pull request, ask whether to post the findings as review co
 - Show one seat another's findings
 - Treat a sentence with no command as a pass
 - Collapse a disagreement into one milder finding
-- Write the HTML page when they did not ask
+- Ask whether to use a previous review that is on disk or on the pull request
+- File a fixed prior item as a new finding
+- Skip the HTML page on a follow-up
+- Write the HTML page on a first review when they did not ask
 - Post pull-request comments before a yes

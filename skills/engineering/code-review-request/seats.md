@@ -1,6 +1,6 @@
 # Seat briefs
 
-Fill one brief per seat. Send the description, the requirements or plan, the base, and the head. Send the mode (`task checkpoint` or `before merge`) to validation only.
+Fill one brief per seat. Send the description, the requirements or plan, the base, and the head. Send the mode (`task checkpoint` or `before merge`) to validation only. On a follow-up, also send the previous head and each prior finding, disagreement, and failed or gap check.
 
 Reviewer seats are read-only on this checkout. Do not commit, edit source, or move HEAD. Inspect with `git show`, `git diff`, and `git log`. Use a temporary worktree for another revision.
 
@@ -54,7 +54,14 @@ Add a manual validation for an observable criterion the tests do not exercise. O
 ### Assessment
 Ready: Yes | No | With fixes
 Reasoning: one or two sentences
+
+### Prior
+- title:
+  status: fixed | still open | gone
+  evidence:
 ```
+
+Include Prior only on a follow-up. `fixed` means the current tree no longer has the defect. `gone` means the code it cited is gone. `still open` means it remains. Do not file a fixed or gone item again under Findings.
 
 `critical` is a break, a security hole, or lost data. `important` should be fixed before the next task or the merge. `minor` can wait. A plan item with no code is a spec gap. A missing test is a test gap.
 

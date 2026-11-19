@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnosis: yesterday's export returns 500</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: light-dark(#1c1c1c, #eceae4);
+    --muted: light-dark(#5c5a55, #b3b0a8);
+    --bg: light-dark(#f6f5f1, #121212);
+    --panel: light-dark(#fff, #1c1c1b);
+    --line: light-dark(#e4e1d8, #333330);
+    --accent: light-dark(#2f5bd3, #8aa8ff);
+    --pass-bg: light-dark(#e5f4e8, #1d3a26);
+    --pass-fg: light-dark(#1d5a2e, #bfe8cb);
+    --warn-bg: light-dark(#fff1d6, #4a3912);
+    --warn-fg: light-dark(#7a5200, #f3dca6);
+    --bad-bg: light-dark(#fde8e6, #4a2220);
+    --bad-fg: light-dark(#8a1f16, #f6c7c2);
+    --chip: light-dark(#f3f1eb, #2a2a28);
+    --shadow: light-dark(0 1px 2px rgba(28, 28, 28, .04), none);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 16px/1.5 -apple-system, system-ui, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  :not(pre) > code { background: var(--chip); padding: 0 .28rem; border-radius: 4px; font-size: .88em; }
+  a { color: var(--accent); }
+  button, summary { font: inherit; }
+  .wrap { width: min(880px, calc(100% - 2rem)); margin: 0 auto; }
+  .bar {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .wrap { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .65rem 0; }
+  .bar strong { font-size: .92rem; }
+  .bar-side { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; justify-content: flex-end; }
+  .status {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .22rem .65rem; border-radius: 999px; font-weight: 650; font-size: .82rem;
+  }
+  .status.fixed { background: var(--pass-bg); color: var(--pass-fg); }
+  .status.found { background: var(--warn-bg); color: var(--warn-fg); }
+  .status.open { background: var(--bad-bg); color: var(--bad-fg); }
+  header.page { padding: 1.6rem 0 0; }
+  .kicker-row { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; margin: 0; }
+  .kicker { margin: 0; color: var(--muted); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+  h1 { margin: .35rem 0 .9rem; font-size: 1.85rem; line-height: 1.15; letter-spacing: -.02em; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin: 0; padding: 0; list-style: none; }
+  .meta li { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .65rem .75rem; box-shadow: var(--shadow); }
+  .meta span { display: block; color: var(--muted); font-size: .75rem; letter-spacing: .03em; text-transform: uppercase; }
+  .meta strong { font-size: .92rem; font-weight: 600; }
+  h2 { margin: 0; font-size: 1.05rem; }
+  section { margin: .75rem 0; }
+  header.page details.block { margin-top: 1rem; }
+  details.block { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: var(--shadow); }
+  details.block > summary {
+    cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+    padding: .85rem 1rem;
+  }
+  details.block > summary::-webkit-details-marker { display: none; }
+  details.block > summary::after { content: "▸"; color: var(--muted); }
+  details.block[open] > summary::after { content: "▾"; }
+  details.block > summary:hover { color: var(--accent); }
+  .count { color: var(--muted); font-weight: 450; font-size: .88rem; }
+  .body { padding: 0 1rem 1rem; }
+  .lead { margin: 0; max-width: 68ch; }
+  .sub { margin: .2rem 0 0; color: var(--muted); font-size: .88rem; }
+  .steps { margin-top: .7rem; }
+  .paste { display: flex; justify-content: space-between; gap: .6rem; align-items: center; margin-top: .7rem; }
+  .paste span { color: var(--muted); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; font-weight: 650; }
+  pre {
+    margin: .35rem 0; padding: .7rem .8rem; overflow-x: auto;
+    background: var(--chip); border-radius: 8px; line-height: 1.45; font-size: .86rem;
+  }
+  .expect { margin: .45rem 0 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: .6rem .4rem; border-top: 1px solid var(--line); }
+  th { color: var(--muted); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
+  .pill {
+    display: inline-block; padding: .08rem .45rem; border-radius: 999px;
+    background: var(--chip); color: var(--muted); font-size: .75rem; font-weight: 650; letter-spacing: .02em;
+  }
+  .pill.pass, .pill.confirmed, .pill.ran { background: var(--pass-bg); color: var(--pass-fg); }
+  .pill.fail { background: var(--bad-bg); color: var(--bad-fg); }
+  .pill.gap, .pill.open { background: var(--warn-bg); color: var(--warn-fg); }
+  .pill.ruled { background: var(--chip); color: var(--muted); }
+  .copy {
+    border: 1px solid var(--line); background: var(--panel); color: var(--fg);
+    border-radius: 7px; padding: .15rem .55rem; cursor: pointer; font-size: .82rem; font-weight: 650;
+  }
+  .copy:hover { border-color: var(--accent); color: var(--accent); }
+  .copy.done { border-color: var(--pass-fg); color: var(--pass-fg); }
+  @media (max-width: 720px) {
+    .bar .wrap { align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="wrap">
+    <strong>Yesterday's export returns 500</strong>
+    <div class="bar-side">
+      <span class="status fixed">Fixed</span>
+      <span class="pill confirmed">1 confirmed</span>
+      <span class="pill ruled">2 ruled out</span>
+    </div>
+  </div>
+</div>
+
+<header class="page wrap">
+  <p class="kicker-row">
+    <span class="kicker">Diagnosis</span>
+    <span class="status fixed">Fixed</span>
+  </p>
+  <h1>Yesterday's export returns 500</h1>
+  <ul class="meta">
+    <li><span>Where</span><strong>services/orders</strong></li>
+    <li><span>File</span><strong>orders/format.ts:18</strong></li>
+    <li><span>Branch</span><strong>fix/yesterday-export</strong></li>
+    <li><span>Date</span><strong>19 Nov 2026</strong></li>
+  </ul>
+
+  <details class="block" open>
+    <summary>
+      <h2>Symptom</h2>
+    </summary>
+    <div class="body">
+      <p class="lead">Exporting a paid order dated yesterday returns HTTP 500 and the message <code>invalid date</code>. A calendar date exports as 200.</p>
+    </div>
+  </details>
+</header>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Cause</h2>
+    </summary>
+    <div class="body">
+      <p class="lead"><code>formatOrderDate</code> passes the word <code>yesterday</code> to <code>Date.parse</code>. The relative-date branch was removed, so a known word throws and the route turns that throw into 500.</p>
+      <p class="expect"><strong>Prediction that held.</strong> Restoring the branch for <code>yesterday</code> makes the same order export as 200. Passing <code>not-a-day</code> still returns 500.</p>
+      <p class="loc sub">orders/format.ts:18</p>
+    </div>
+  </details>
+</section>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Manual replication <span class="count">1 step</span></h2>
+    </summary>
+    <div class="body">
+      <p class="sub">Shows the bug. One paste from <code>services/orders</code>. Captured before the fix.</p>
+      <div class="paste">
+        <span>Paste</span>
+        <button class="copy" type="button" data-copy="repro">Copy</button>
+      </div>
+      <pre id="repro">cd services/orders && node scripts/export-yesterday.js</pre>
+      <p class="expect"><strong>Bug looks like</strong> stdout <code>500 invalid date</code> and exit code 1.</p>
+      <pre>500 invalid date
+exit 1</pre>
+    </div>
+  </details>
+</section>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Manual validation <span class="count">same step</span></h2>
+    </summary>
+    <div class="body">
+      <p class="sub">Same paste. Run after the fix. Validation seat, 19 Nov 2026.</p>
+      <div class="paste">
+        <span>Paste</span>
+        <button class="copy" type="button" data-copy="validate">Copy</button>
+      </div>
+      <pre id="validate">cd services/orders && node scripts/export-yesterday.js</pre>
+      <p class="expect"><strong>Fixed looks like</strong> stdout <code>200 ord_1</code> and exit code 0.</p>
+      <pre>200 ord_1
+exit 0</pre>
+    </div>
+  </details>
+</section>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Loop <span class="count">red, then green</span></h2>
+    </summary>
+    <div class="body">
+      <p class="sub">Loop seat. <code>services/orders</code>. 2 seconds. Steady.</p>
+      <pre>node scripts/export-yesterday.js</pre>
+      <p class="expect"><strong>Red output</strong>, before the fix.</p>
+      <pre>500 invalid date
+exit 1</pre>
+    </div>
+  </details>
+</section>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Triage <span class="count">1 confirmed · 2 ruled out</span></h2>
+    </summary>
+    <div class="body">
+      <table>
+        <thead>
+          <tr><th>Rank</th><th>Hypothesis</th><th></th><th>Evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><code>yesterday</code> falls through to <code>Date.parse</code> at <code>orders/format.ts:18</code>.</td>
+            <td><span class="pill confirmed">confirmed</span></td>
+            <td>
+              <pre>node scripts/export-yesterday.js
+# with the relative branch restored
+200 ord_1
+exit 0</pre>
+            </td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>The export route rejects this caller.</td>
+            <td><span class="pill ruled">ruled out</span></td>
+            <td>
+              <pre>node scripts/export-yesterday.js --since=2026-11-18
+200 ord_1
+exit 0</pre>
+            </td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>A cached 500 is served for this order.</td>
+            <td><span class="pill ruled">ruled out</span></td>
+            <td>
+              <pre>node scripts/export-yesterday.js --order=ord_new
+500 invalid date
+exit 1</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Checks <span class="count">2 pass</span></h2>
+    </summary>
+    <div class="body">
+      <table>
+        <thead>
+          <tr><th>Check</th><th></th><th>Who</th><th>Evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Original loop, un-minimised order export.</td>
+            <td><span class="pill pass">pass</span></td>
+            <td>Validation</td>
+            <td>
+              <pre>node scripts/export-yesterday.js
+200 ord_1
+exit 0</pre>
+            </td>
+          </tr>
+          <tr>
+            <td>Regression test names the symptom.</td>
+            <td><span class="pill pass">pass</span></td>
+            <td>Validation</td>
+            <td>
+              <pre>npm test -- src/orders/format.test.ts -t "yesterday"
+✓ exports an order dated yesterday
+  HTTP 200
+Tests  1 passed</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<section class="wrap">
+  <details class="block" open>
+    <summary>
+      <h2>Cleanup</h2>
+    </summary>
+    <div class="body">
+      <p class="sub">No <code>[DEBUG-</code> lines left. The wrapper <code>scripts/export-yesterday.js</code> stays because it is the manual command. Throwaway logs were deleted.</p>
+      <pre>rg '\[DEBUG-' services/orders
+# no matches</pre>
+    </div>
+  </details>
+</section>
+
+<script>
+document.querySelectorAll(".copy").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const text = document.getElementById(button.dataset.copy).textContent.trim();
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch (err) {
+      ok = false;
+    }
+    button.textContent = ok ? "Copied" : "Copy failed";
+    button.classList.toggle("done", ok);
+    setTimeout(() => {
+      button.textContent = "Copy";
+      button.classList.remove("done");
+    }, 1600);
+  });
+});
+</script>
+</body>
+</html>
