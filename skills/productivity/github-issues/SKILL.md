@@ -1,6 +1,15 @@
-# Issue tracker: GitHub
+---
+name: github-issues
+description: Operates GitHub issues for the current repo with the gh CLI. Searches, reads, creates, edits, comments, closes, and records task graphs, blocking edges, child issues, estimates, and triage labels. Use when a skill or the user needs to read or write a GitHub issue, or names a GitHub issue number or a github.com issue URL.
+---
+
+# GitHub issues
 
 Issues for this repo are GitHub issues. Use the `gh` CLI from inside the clone. `gh` infers the repo from `origin`.
+
+If the id is a Jira key (`ABC-123`) or the URL is a Jira URL, read the `jira` skill instead.
+
+If `origin` is not a GitHub repo, say so and stop. Do not guess another host.
 
 ## Commands
 
@@ -32,7 +41,7 @@ Create a GitHub issue. The description is Markdown.
 
 ## When a skill says "fetch the relevant ticket"
 
-Read it with `gh issue view`.
+Read it with `gh issue view`, comments included.
 
 ## When a skill says "fetch the task graph"
 
@@ -60,8 +69,26 @@ If `gh` does not recognize the flag, the child body starts with `Part of #PARENT
 
 Comment with `gh issue comment NUMBER --body "..."`. Leave the body, the state, and the labels as they are.
 
+## When a skill says "edit the body"
+
+`gh issue edit NUMBER --body "..."`. Leave the state and the labels as they are.
+
+## When a skill says "propose triage labels"
+
+Look up labels this repo already uses. Do not create a label.
+
+1. `gh label list --limit 100 --json name`
+2. For each candidate below that appears in that list, `gh issue list --state all --limit 1 --label "NAME" --json number`. A result means the label is used. No result means it is defined and unused. Do not propose an unused label.
+
+The calling skill says whether it wants a type, an entry state, or both.
+
+- **State.** A used label named `needs-triage`, `triage`, or `untriaged`. When more than one of those is used, recommend one and name the other. None used: no State line.
+- **Type.** The one used label that names the kind of work the calling skill describes, among `bug`, `defect`, `enhancement`, `feature`, `task`, `documentation`, `docs`, `chore`, `spike`, and `refactor`. When two used labels fit, recommend one and name the other. None used: no Type line.
+
+Do not propose `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. Return the label string, not a role name.
+
 ## When a skill says "apply a triage label"
 
-Add only the strings that `.agent-repo-config/triage-label.md` maps and the human approved on the draft. On create, repeat `--label "name"` once per string. On an existing issue, `gh issue edit NUMBER --add-label "name"`.
+Add only the Type and State strings on the approved draft. Skip a line that was omitted. On create, repeat `--label "name"` once per string. On an existing issue, `gh issue edit NUMBER --add-label "name"`.
 
-Do not create a label. Skip a role whose Tracker label cell is empty. Quote a name that contains spaces.
+Do not create a label. Quote a name that contains spaces.

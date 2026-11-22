@@ -10,7 +10,7 @@ Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Start every sub-agent with a fresh context window.
 
-The spec comes from the issue tracker or a file. For an issue, read `.agent-repo-config/issue-tracker.md`. If that file is missing, tell the user to run `setup-repo-skills`.
+The spec comes from the issue tracker or a file. For an issue, read the `github-issues` skill or the `jira` skill. Use `jira` when the id is a Jira key or the URL is Jira. Use `github-issues` when the id is a GitHub issue number, the URL is a github.com issue, or `origin` is GitHub and no Jira key was given. Ask when you cannot tell.
 
 ## Process
 
@@ -26,7 +26,7 @@ Before going further, confirm the fixed point resolves (`git rev-parse <fixed-po
 
 Look for the originating spec, in this order:
 
-1. A spec the caller passed explicitly: an issue number or URL, or a file path. Fetch an issue with "fetch the relevant ticket" in `.agent-repo-config/issue-tracker.md`.
+1. A spec the caller passed explicitly: an issue number or URL, or a file path. Fetch an issue with "fetch the relevant ticket" in the tracker skill.
 2. Issue references in the commit messages (`#123`, `Closes #45`, GitLab `!67`, etc.), fetched the same way.
 3. A spec file under `docs/`, `specs/`, `.scratch/`, or `.agent-docs/` matching the branch name or feature.
 4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".

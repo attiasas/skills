@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: Record a foggy effort as a decision map settled across sessions, with options and a recommendation on each open question. Export it to the issue tracker or a file in the repo, then hand it to to-tickets or settle each open until the route is clear. A design, spec, or plan produced in one dialogue belongs to hld-planner. Applies the mapped entry state on a tracker export when a triage label map exists.
+description: Record a foggy effort as a decision map settled across sessions, with options and a recommendation on each open question. Export it to GitHub issues, Jira, or a file in the repo, then hand it to to-tickets or settle each open until the route is clear. A design, spec, or plan produced in one dialogue belongs to hld-planner.
 disable-model-invocation: true
 ---
 
@@ -23,7 +23,7 @@ The human brings a loose idea and no map.
    - **Open.** Decisions you can already phrase as one question. Order them. Mark which are blocked by which. Each one has two or three options and one recommendation. The recommendation names the option and why, in one or two lines. A question you cannot give two real options is **Not yet specified**.
    - **Not yet specified.** In-scope areas you cannot phrase as a question yet.
    - **Out of scope.** Work this destination does not include.
-   - **State.** When `.agent-repo-config/triage-label.md` maps `needs-triage`, the tracker string. Omit the line when it does not. A local file drops this line.
+   - **State.** On a tracker export, the entry label from "propose triage labels" in the tracker skill. Ask for an entry state only. Omit the line when none is returned. A local file drops this line.
 
    Open item:
 
@@ -41,7 +41,7 @@ The human brings a loose idea and no map.
 
 ### Tracker
 
-Read `.agent-repo-config/issue-tracker.md` and follow it for create, read, comment, and close. To change a body, edit that same issue (`gh issue edit NUMBER --body` when the file says GitHub; otherwise update it the way that file says to create one). If the file is missing, stop and tell the human to run `setup-repo-skills`. When `.agent-repo-config/triage-label.md` maps `needs-triage`, apply that tracker string to every issue this skill creates. Apply no type unless the human names one. When the triage file is missing, create the issues with no triage label and do not ask. When the tracker file has no "apply a triage label" section, say so, tell the human to re-run `setup-repo-skills`, and create the issues with no triage label.
+Read the `github-issues` skill or the `jira` skill and follow it for create, read, comment, close, and edit the body. Use `jira` when the id is a Jira key or the URL is Jira. Use `github-issues` when the id is a GitHub issue number, the URL is a github.com issue, or `origin` is GitHub and no Jira key was given. Ask when you cannot tell. When "propose triage labels" returns an entry state, apply that string to every issue this skill creates. Apply no type unless the human names one. When no entry state is returned, create the issues with no triage label and do not ask.
 
 Create the map issue. Title: `Map: <short destination>`. Body:
 
@@ -107,7 +107,7 @@ When no open decision remains, the plan handoff is the only next step.
 
 The human points at a map (number, URL, or path). An open item is optional.
 
-1. Read the map. Re-read it before writing if it may have changed. A path is the local file. A number or URL is a tracker issue: read it the way the tracker file says.
+1. Read the map. Re-read it before writing if it may have changed. A path is the local file. A number or URL is a tracker issue: read it the way the tracker skill says.
 2. Pick the open item. Use the one they named when it is open and every blocker is closed. Otherwise take the first ready entry under **Open**. Confirm a blocker is still open before skipping one. Read that item before settling. On the tracker, that is the decision issue.
 3. Settle that one question with them. Show the options and the recommendation already on it. A short lookup or a rough sketch belongs in the same item when the question needs it. When the question is a preference, the answer is theirs. Wait for the reply before recording. Accepting the recommendation is a reply.
 4. Record it.

@@ -18,7 +18,7 @@ Everything this skill writes goes under `.agent-docs/assess-<slug>/`, where the 
 
 The input is an issue (number or URL), a file path, or the current conversation.
 
-- An issue: read `.agent-repo-config/issue-tracker.md` and fetch it the way that file says, comments included. If the file is missing, stop and tell the human to run `setup-repo-skills`.
+- An issue: read the `github-issues` skill or the `jira` skill and fetch it the way that skill says, comments included. Use `jira` when the id is a Jira key or the URL is Jira. Use `github-issues` when the id is a GitHub issue number, the URL is a github.com issue, or `origin` is GitHub and no Jira key was given. Ask when you cannot tell.
 - A path: read the whole file.
 - The conversation: use what it settled.
 
@@ -61,7 +61,7 @@ Every acceptance criterion in `spec.md` maps to a test in the brief, or to a row
 Show `decision.md` when it exists, and the path to `design.md`. Ask what to do next. They may pick more than one:
 
 - **Human review.** Show the design and take their edits. Write the edits into `design.md` and, when the edit changes the recommendation, into `decision.md`.
-- **Record on the issue.** Only when the input was an issue. Draft a comment: the recommendation and the design summary. Show the exact body and wait for a reply to it. Then post it the way the tracker file says to comment. "Post whatever you write" said before the body was shown is not approval.
+- **Record on the issue.** Only when the input was an issue. Draft a comment: the recommendation and the design summary. Show the exact body and wait for a reply to it. Then post it the way the tracker skill says to comment. "Post whatever you write" said before the body was shown is not approval.
 - **Implementation handover.** Write `handover.md`: the spec, `decision.md` when it exists, the design inlined, and the acceptance criteria and validations as a checklist. A fresh implementer must be able to start from that file alone. When the change spans more than one shippable slice, tell the human to run `to-tickets` with that file.
 
 Do not implement the change here.

@@ -12,4 +12,5 @@ Reachable only when you type the skill name (`disable-model-invocation: true`).
 
 Reachable by you or by the agent when the task fits.
 
-None yet.
+- **[github-issues](./github-issues/SKILL.md)**: Operate GitHub issues for the current repo with the `gh` CLI: search, read, create, edit, comment, close, task graphs, blocking edges, child issues, estimates, and triage labels. Load when a skill or the user needs a GitHub issue.
+- **[jira](./jira/SKILL.md)**: Operate Jira issues for the current repo through the Jira integration already connected in the session: search, read, create, edit, comment, close, task graphs, blocking links, child issues, estimates, and triage labels. Load when a skill or the user needs a Jira issue.

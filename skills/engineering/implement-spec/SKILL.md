@@ -16,7 +16,7 @@ Start every subagent with a fresh context window. Talk to subagents through poin
 
 The input is anything that holds a spec:
 
-- **Issue** (number, key, or URL). Read `.agent-repo-config/issue-tracker.md`. If it is missing, stop and tell the human to run `setup-repo-skills`. Follow "fetch the task graph", comments included. Child issues are tickets. A lone issue is its own ticket and its own parent.
+- **Issue** (number, key, or URL). Read the `github-issues` skill or the `jira` skill. Use `jira` when the id is a Jira key or the URL is Jira. Use `github-issues` when the id is a GitHub issue number, the URL is a github.com issue, or `origin` is GitHub and no Jira key was given. Ask when you cannot tell. Follow "fetch the task graph", comments included. Child issues are tickets. A lone issue is its own ticket and its own parent.
 - **Path** to a file (spec, `handover.md`, HLD, plan). Read the whole file and every file it links to. Issue ids it names are tickets.
 - **Conversation.** Use what the chat settled.
 
@@ -118,7 +118,7 @@ Stop there. Do not merge the pull request, close a ticket, or run the tracker's 
 
 ## Progress
 
-Follow "record progress" in the tracker file, formatted the way its Body section says. Leave the description, the status, and the labels as they are. If that section is missing, say so once and continue with no notes. Only this session posts. Implementer, merger, reviewer, and QA subagents do not.
+Follow "record progress" in the tracker skill, formatted the way its Body section says. Read that skill first when this run has not already. Leave the description, the status, and the labels as they are. Only this session posts. Implementer, merger, reviewer, and QA subagents do not.
 
 Post on the parent: the source issue, or the parent the input names. With several tickets and no parent, post each note on every ticket it concerns.
 

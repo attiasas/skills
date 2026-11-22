@@ -70,4 +70,19 @@ for DEST in "${DESTS[@]}"; do
     ln -sfn "$src" "$target"
     echo "linked $name -> $src ($DEST)"
   done
+
+  # A removed or renamed skill leaves a symlink. Drop it when it points
+  # into this repo and that directory no longer has a SKILL.md.
+  for target in "$DEST"/*; do
+    [ -L "$target" ] || continue
+    link="$(readlink "$target")"
+    case "$link" in
+      "$REPO/skills/"*)
+        if [ ! -f "$link/SKILL.md" ]; then
+          rm "$target"
+          echo "unlinked $(basename "$target") ($DEST)"
+        fi
+        ;;
+    esac
+  done
 done
