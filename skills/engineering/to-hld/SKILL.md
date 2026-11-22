@@ -1,6 +1,7 @@
 ---
 name: to-hld
 description: Produce a high-level design (HLD) file using the seven-section engineering design-review template, plus an HTML slide deck of it for the review. Use when the user asks for an HLD, high-level design, feature design review, DR deck/doc, or to write design-review sections (Why, system diagram, sequence, schema/ERD, API, NFR, testing, open questions).
+version: 1.0.0
 ---
 
 # Creating an HLD
@@ -23,7 +24,7 @@ For a worked example, see [examples.md](examples.md). For a blank file skeleton,
 
 ## HTML review deck
 
-The markdown is the source of truth. The deck is a view of it for the review: one full-screen slide per section, a side rail to jump between them, arrow keys and PageUp/PageDown to step, and one slide per page when printed.
+The markdown is the source of truth. The deck is a view of it for the review: one full-screen slide per section, a side rail to jump between them, arrow keys and PageUp/PageDown to step (on a slide taller than the screen they scroll it first, then advance), and each slide starts on a new page when printed.
 
 - Copy `template.html` and replace every UPPERCASE placeholder. Repeat a block (gap card, table row, migration step, question card) once per item; delete blocks the HLD has no content for, but keep every slide.
 - Carry the content over, do not summarise it away and do not add claims the markdown lacks. Shorten prose to fit a slide; tables, numbers, payloads and diagrams go over whole.
@@ -37,7 +38,8 @@ The markdown is the source of truth. The deck is a view of it for the review: on
   - 07 Testing: one band row per band, its cases under it.
   - Open questions: one card per question; the recommended option gets class `rec`.
   - Appendices: one extra slide each, after open questions.
-- Escape `<`, `>` and `&` in payloads and table text. Mermaid blocks keep the markdown's source verbatim.
+- Escape `<`, `>` and `&` in payloads and table text. Mermaid blocks get the same escaping inside `<pre class="mermaid">`: the browser decodes it back to the markdown's source, which Mermaid then reads. Unescaped, `<br/>` or `&` in a label is parsed as HTML and the diagram changes.
+- A slide that outgrows one printed page (a long testing table) continues onto the next page. If it is also too long to read on screen, split it into continuation slides ("07 Testing (2/2)") that keep the section's heading.
 - When the markdown changes, regenerate the deck so the two never disagree.
 
 ## File shape

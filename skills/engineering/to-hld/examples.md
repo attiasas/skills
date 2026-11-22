@@ -47,8 +47,11 @@ Edges: signup payload; restock event; waiting rows; outbound email.
 3. inventory → notify: one event, `{ isbn, qty: 40 }` — not one event per copy
 4. notify → postgres: `SELECT` waiting rows for that ISBN
 5. 25 rows. If 0, stop here. No email, no further writes.
-6. notify → mailer: 25 emails, one batch
+6. notify → mailer: 25 emails, one batch; each email carries its `stock_alerts.id` as the idempotency key
 7. notify → postgres: mark those 25 rows `sent`
+8. notify acknowledges the restock event, only after step 7 commits
+
+If step 7 fails after the mailer accepted the batch, the event is not acknowledged and is replayed. Step 6 runs again with the same keys, so the mailer drops the 25 duplicates and step 7 then succeeds. Each person still gets one email.
 
 A restock of 1 copy and a restock of 40 copies are the same number of steps. The only thing that grows is the email batch.
 
@@ -88,6 +91,7 @@ Response `201`:
 - **5 minutes** from restock event to last email in the batch
 - **50,000** waiting rows, a year of signups if nobody buys
 - **Mailer down** — restock event stays on the queue and retries; no row is marked `sent` until the batch is accepted
+- **Mailer accepts, postgres write fails** — event is not acknowledged; the replay resends with the same idempotency keys, so the mailer sends nothing twice
 
 | Dimension | Today | Target | Source of the number |
 | --- | --- | --- | --- |
@@ -106,6 +110,7 @@ Response `201`:
 | Edge cases | Same email signs up twice | Second call is `200`; still one email on restock |
 | Edge cases | Unknown ISBN; book already in stock; empty email | `404`, `409`, `400`; no row written |
 | Error handling | Mailer returns 503 | Rows stay `waiting`; event retries; no duplicate email after the retry succeeds |
+| Error handling | Mailer accepts the batch, then the `sent` update fails; event replays | Mailer receives the same 25 idempotency keys twice and sends 25 emails in total; rows end `sent` |
 | Error handling | postgres down on signup | `503` to the browser; no email queued |
 | Non-functional | Batches of 1, 25, 500 waiting rows | Last email sent within 5 minutes; a 501st row is a second batch, not a dropped row |
 
