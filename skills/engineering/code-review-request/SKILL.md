@@ -17,6 +17,8 @@ Use the **before-merge** bar after a major feature and before a merge.
 
 Pin the base and the head. Read `git diff --stat <base>..<head>` and `git rev-list --count <base>..<head>`. Record the branch, the base it comes from, and the commit count. Record a pull request link when one exists, and an issue link when the work names one.
 
+Check readiness and record it in the range. The pull request links its ticket and its approved design. CI is green. It is one concern, small enough to read. A missing link or a red CI is an important finding. A pull request that mixes concerns is a minor finding, or important when it hides the risky part.
+
 Look for a previous review. Do not ask which source to use.
 
 1. The latest `.agent-docs/code-review-*.html` in the repo under review whose head is an ancestor of the current head.
@@ -48,7 +50,7 @@ On a task checkpoint, run the tests that cover the diff. Record the command and 
 
 On the before-merge bar, every observable acceptance criterion needs a real command and its output. A gap or a fail blocks a Yes. A unit test counts only for the criterion it asserts.
 
-A sentence with no command is a gap. A manual validation is one command from a named directory, what it covers, what a pass looks like, and who ran it. A run includes the output.
+A sentence with no command is a gap. An acceptance test is a Gherkin scenario (Given, When, Then) for one criterion, plus the one command from a named directory that runs it, and who ran it. The Then line is what a pass looks like. A run includes the output.
 
 On a follow-up, validation re-runs the checks that failed or were gaps. A prior finding is fixed, still open, or gone. A fixed item is not filed again. A still-open item stays a finding. An item that was not in the previous report is new.
 
@@ -68,7 +70,7 @@ The status line is `Not ready for merge`, `Ready with fixes`, or `Ready for merg
 
 ## Report
 
-Write the report in chat, in this order: mode and status, range, a two-or-three-line summary with strengths and risks, since last review, roster, acceptance status, manual validations, disagreements, findings. Group findings critical, then important, then minor. Omit an empty severity.
+Write the report in chat, in this order: mode and status, range, a two-or-three-line summary with strengths and risks, since last review, roster, acceptance status, acceptance tests, disagreements, findings. Group findings critical, then important, then minor. Omit an empty severity.
 
 On a follow-up, since last review names where the prior items came from, the local page or the pull request review, and the range from that head to this one. Each prior item is fixed, still open, or gone, with the evidence. Then name the new findings. Omit the section on a first review.
 
