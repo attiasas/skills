@@ -68,8 +68,8 @@ Issue both sub-agent calls together, in the foreground, and aggregate the report
 **Spec sub-agent prompt** should include:
 
 - The diff command and commit list.
-- The path or fetched contents of the spec.
-- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
+- The path or fetched contents of the spec, and any plan or HLD the caller passed.
+- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. (d) requirements with no test that asserts them; (e) when a plan or HLD is also supplied, changes that depart from it without being recorded. Quote the spec line for each finding. Under 400 words."
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
 

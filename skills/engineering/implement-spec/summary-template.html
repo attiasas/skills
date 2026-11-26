@@ -1,153 +1,10 @@
 <!doctype html>
-<!--
-Link conventions. Every path, branch, commit, ticket, and test on this page is a link.
-  Inside this page      href="#spec-ac-1", href="#change-t2". Give the target an id.
-  A file on disk        href="file:///ABSOLUTE/PATH/file.ext" (add "#L42" for a line). Use the absolute path.
-  A directory on disk   href="file:///ABSOLUTE/PATH/dir/"
-  Outside the machine   the full https:// URL of the ticket, pull request, branch, or commit.
-Link text is the short name (`spec.md`, `abc1234`, `T2`). The href is always the full path or URL.
-Counts are numbers you measured with a command or counted from rows on this page. Never estimate.
-Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`, changes `change-ID`.
--->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Implementation: TITLE</title>
-<style>
-  :root {
-    color-scheme: light dark;
-    --fg: light-dark(#1c1c1c, #eceae4);
-    --muted: light-dark(#5c5a55, #b3b0a8);
-    --bg: light-dark(#fbfaf7, #121212);
-    --panel: light-dark(#fff, #1b1b1a);
-    --sunk: light-dark(#f6f5f1, #222220);
-    --line: light-dark(#e2e0da, #343432);
-    --accent: light-dark(#2f5bd3, #8aa8ff);
-    --planned-bg: light-dark(#e7eefc, #1c2744); --planned-fg: light-dark(#1e3a8a, #c9d7ff);
-    --dev-bg: light-dark(#fff1d6, #4a3912); --dev-fg: light-dark(#7a5200, #f3dca6);
-    --fix-bg: light-dark(#f3e8ff, #3b2760); --fix-fg: light-dark(#5b21b6, #e4d4ff);
-    --pass-bg: light-dark(#e5f4e8, #1d3a26); --pass-fg: light-dark(#1d5a2e, #bfe8cb);
-    --fail-bg: light-dark(#fde8e8, #4a1c1c); --fail-fg: light-dark(#8f1d1d, #ffc9c9);
-    --gap-bg: light-dark(#eeeae4, #2a2a28); --gap-fg: light-dark(#3f3d38, #d4d0c8);
-    --sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); }
-  a { color: var(--accent); text-underline-offset: 2px; }
-  code { font: 0.88em var(--mono); background: var(--sunk); padding: 0 4px; border-radius: 3px; }
-  main { max-width: 1000px; margin: 0 auto; padding: 32px 72px 96px 28px; }
-
-  /* Right rail, same style as hld-planner */
-  .progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--accent); z-index: 10; transition: width .2s; }
-  .rail { position: fixed; top: 50%; right: 1rem; transform: translateY(-50%); display: flex; flex-direction: column; gap: .35rem; z-index: 10; }
-  .rail a { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; text-decoration: none; color: var(--muted); font-size: 12px; }
-  .rail a span { opacity: 0; transition: opacity .15s; background: var(--panel); border: 1px solid var(--line); padding: 0 .4rem; border-radius: 4px; white-space: nowrap; }
-  .rail a:hover span, .rail a.active span, .rail a:focus-visible span { opacity: 1; }
-  .rail a::after { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--muted); }
-  .rail a.active::after { background: var(--accent); border-color: var(--accent); }
-  .rail a.attn::after { border-color: var(--fail-fg); background: var(--fail-bg); }
-  .rail a.active.attn::after { background: var(--fail-fg); border-color: var(--fail-fg); }
-
-  /* Page head: regular, not sticky */
-  .top { margin: 0 0 28px; }
-  .top-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
-  h1 { margin: 6px 0 6px; font-size: 28px; line-height: 1.2; letter-spacing: -0.02em; }
-  .lede { margin: 0; color: var(--muted); max-width: 70ch; }
-
-  /* Collapsible sections */
-  section { margin: 0 0 20px; }
-  details.sec { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
-  details.sec > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; cursor: pointer; padding: 14px 16px; list-style: none; }
-  details.sec > summary::-webkit-details-marker { display: none; }
-  details.sec > summary::before { content: "▸"; color: var(--muted); width: 12px; transition: transform .12s; }
-  details.sec[open] > summary::before { transform: rotate(90deg); }
-  details.sec > summary h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
-  .sum { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; font-size: 13px; color: var(--muted); }
-  .body { padding: 2px 16px 18px; }
-  h3 { margin: 22px 0 8px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  h3:first-child { margin-top: 6px; }
-  details.sub { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); margin: 14px 0 0; }
-  details.sub > summary { cursor: pointer; padding: 9px 12px; font-weight: 600; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
-  details.sub > .body { padding-top: 4px; }
-  .note { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
-  .note.src { font-family: var(--mono); font-size: 12px; }
-
-  /* Overview cards */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
-  .card { display: block; text-decoration: none; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
-  .card:hover { border-color: var(--accent); }
-  .card .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-  .card .v { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.2; }
-  .card .d { color: var(--muted); font-size: 13px; line-height: 1.35; }
-  .actions { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-  .actions li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
-  .actions li.none { color: var(--muted); }
-  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 16px; margin: 0; }
-  .kv dt { color: var(--muted); font-size: 13px; }
-  .kv dd { margin: 0; overflow-wrap: anywhere; }
-
-  /* Tables */
-  .scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { border-bottom: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
-  th { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-  tr:last-child td { border-bottom: 0; }
-  tr:target td { background: var(--dev-bg); }
-  td.id { white-space: nowrap; font-family: var(--mono); font-size: 13px; }
-  .ev { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 13px; }
-  .ev .count { color: var(--muted); }
-  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.45 var(--mono); background: var(--sunk); border-radius: 6px; padding: 8px 10px; }
-  details.out { margin-top: 6px; font-size: 13px; }
-  details.out > summary { cursor: pointer; color: var(--muted); }
-
-  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font: 600 12px/1.5 var(--sans); white-space: nowrap; }
-  .planned { background: var(--planned-bg); color: var(--planned-fg); }
-  .deviation { background: var(--dev-bg); color: var(--dev-fg); }
-  .fix { background: var(--fix-bg); color: var(--fix-fg); }
-  .pass { background: var(--pass-bg); color: var(--pass-fg); }
-  .fail { background: var(--fail-bg); color: var(--fail-fg); }
-  .gap { background: var(--gap-bg); color: var(--gap-fg); }
-
-  /* Manual acceptance tests */
-  .mtest { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 14px 16px; margin: 0 0 14px; }
-  .mtest-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-  .mtest h4 { margin: 0; font-size: 16px; }
-  .mtest .why { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
-  .prep { margin: 12px 0 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--panel); border-radius: 0 6px 6px 0; font-size: 14px; }
-  .prep b { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
-  ol.steps { list-style: none; counter-reset: step; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
-  ol.steps > li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 0 10px; }
-  ol.steps > li::before { content: counter(step); width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--panel); display: grid; place-items: center; font: 600 12px var(--sans); margin-top: 2px; }
-  .step-do { font-weight: 600; }
-  .step-do label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
-  .step-do input { margin-top: 5px; }
-  input:checked + span { text-decoration: line-through; color: var(--muted); }
-  .cmd { position: relative; margin-top: 6px; }
-  .cmd pre { padding-right: 62px; }
-  .copy { position: absolute; top: 5px; right: 5px; font: 600 11px var(--sans); border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 4px; padding: 1px 7px; cursor: pointer; }
-  .expect { margin-top: 6px; font-size: 14px; }
-  .expect b { color: var(--pass-fg); font-weight: 600; }
-  .gherkin { margin: 12px 0 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; font: 13px/1.6 var(--mono); }
-  .gherkin .kw { font-weight: 700; color: var(--accent); }
-  .gherkin .sc { font-weight: 700; }
-  .gherkin div.and { padding-left: 1.5em; }
-  .pass-when { margin: 12px 0 0; font-size: 14px; }
-  .progress-line { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
-
-  @media (max-width: 800px) {
-    .rail { display: none; }
-    main { padding: 20px 16px 72px; }
-    .kv { grid-template-columns: 1fr; gap: 0; }
-    .kv dd { margin-bottom: 8px; }
-  }
-  @media print {
-    .rail, .progress, .copy { display: none; }
-    main { padding: 0; }
-  }
-</style>
+<link rel="stylesheet" href="summary.css">
 </head>
 <body>
 <div class="progress"></div>
@@ -163,7 +20,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
   <p class="lede">Nothing is on the integration branch yet. Commit lands the task branches. Adjust changes the work and this page first.</p>
 </header>
 
-<!-- ============ OVERVIEW ============ -->
 <section id="overview" data-title="Overview">
   <details class="sec" open>
     <summary><h2>Overview</h2><span class="sum">OVERVIEW_ONE_LINE</span></summary>
@@ -171,8 +27,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
 
       <h3>Where it stands</h3>
       <div class="cards">
-        <!-- One card per status. Every card links to the section that holds the detail.
-             Keep: spec to implementation, validations, tests, manual tests, review. Delete a card you cannot measure and name it in chat. -->
         <a class="card" href="#spec-criteria">
           <div class="k">Acceptance criteria</div>
           <div class="v">AC_PASS / AC_TOTAL pass</div>
@@ -200,11 +54,37 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
         </a>
       </div>
 
+      <h3>Definition of done</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Question</th><th>Verdict</th><th>Basis</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Built as designed</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#spec-criteria">DOD_DESIGN_BASIS</a><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/hld.md">hld.md</a></div></td>
+            </tr>
+            <tr>
+              <td>Built as planned</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#changes">DOD_PLAN_BASIS</a></div></td>
+            </tr>
+            <tr>
+              <td>Safe to run</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#reviews">DOD_SAFETY_BASIS</a></div></td>
+            </tr>
+            <tr>
+              <td>Proven by tests</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#auto-tests">DOD_TESTS_BASIS</a></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <h3>Needs your attention</h3>
       <ul class="actions">
-        <!-- One li per open item the human should act on: a fail, a gap, a deviation that needs a decision, a manual test to run, a Minor finding to accept.
-             Say what to do and link to where. Class on the pill: fail, gap, deviation, or planned.
-             When nothing needs action keep only the li.none below. -->
         <li><span class="pill gap">ACTION_KIND</span><span>ACTION_WHAT_TO_DO, <a href="#mt-ID">ACTION_TARGET</a></span></li>
         <li class="none">Nothing else needs you. Choose Commit or Adjust in chat.</li>
       </ul>
@@ -215,7 +95,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
           <dl class="kv">
             <dt>Spec</dt><dd><a href="SPEC_SOURCE_URL_OR_FILE_URL">SPEC_SOURCE</a>, copied to <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/spec.md">spec.md</a></dd>
             <dt>Size</dt><dd>SIZE_AND_WHY</dd>
-            <!-- Delete the HLD row for a small change. -->
             <dt>HLD</dt><dd><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/hld.md">hld.md</a>: HLD_SUMMARY</dd>
           </dl>
         </div>
@@ -229,7 +108,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
             <dt>Integration branch</dt><dd><a href="INTEGRATION_BRANCH_URL">INTEGRATION_BRANCH</a>, unchanged, still at <a href="INTEGRATION_COMMIT_URL"><code>INTEGRATION_SHA</code></a></dd>
             <dt>Task branches</dt>
             <dd>
-              <!-- One line per task branch -->
               <div><a href="TASK_BRANCH_URL">TASK_BRANCH</a>, <a href="#task-ID">TASK_ID</a>, <a href="TASK_COMMIT_URL"><code>TASK_SHA</code></a>, worktree <a href="file:///ABSOLUTE/PATH/TO/WORKTREE/">WORKTREE_PATH</a></div>
             </dd>
             <dt>Pull request</dt><dd>PR_LINK_OR_NONE_YET</dd>
@@ -248,7 +126,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
   </details>
 </section>
 
-<!-- ============ SPEC ============ -->
 <section id="spec" data-title="Spec">
   <details class="sec">
     <summary><h2>Spec</h2><span class="sum"><span class="pill pass">AC_PASS pass</span><span class="pill fail">AC_FAIL fail</span><span class="pill gap">AC_GAP gap</span></span></summary>
@@ -261,13 +138,10 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
         <table>
           <thead><tr><th>ID</th><th>Criterion</th><th>Status</th><th>Test</th><th>Evidence</th><th>Built by</th></tr></thead>
           <tbody>
-            <!-- One row per acceptance criterion and per validation in spec.md. Status pill class: pass, fail, or gap.
-                 Evidence is a few links or counts: the tests that check it (file with line), the manual test, the command. The command and its output go in Validations, one click away. -->
             <tr id="ac-ID">
               <td class="id">AC_ID</td>
               <td>AC_TEXT <a href="file:///ABSOLUTE/PATH/spec.md#LINE">spec line</a></td>
               <td><span class="pill pass">pass</span></td>
-              <!-- Coverage, as the Gherkin guide asks. Existing test: link the test. New: no coverage before this change, the test was added here. -->
               <td><span class="pill planned">Existing test</span> or <span class="pill fix">New</span></td>
               <td><div class="ev">
                 <a href="file:///ABSOLUTE/PATH/TEST_FILE#LINE">TEST_NAME</a>
@@ -289,7 +163,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
   </details>
 </section>
 
-<!-- ============ VALIDATIONS ============ -->
 <section id="validations" data-title="Validations">
   <details class="sec" open>
     <summary><h2>Validations</h2><span class="sum">MANUAL_COUNT manual tests for you, <span class="pill pass">PASSED passed</span><span class="pill fail">FAILED failed</span></span></summary>
@@ -297,9 +170,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
 
       <h3 id="manual-tests">Manual acceptance tests</h3>
       <p class="note">Run these yourself to see the change work. Each is the fewest steps that show the behaviour. Everything you need is prepared. Tick a step as you go. If something differs from what to expect, choose Adjust and say which step.</p>
-      <!-- Delete this whole h3, note, and the articles when testing.md has no manual test. Say so in chat.
-           One article per manual test. Fewest steps. One action per step.
-           Prepare everything first: the directory, the build, the seed data, the process to start, so the human only acts and looks. -->
       <article class="mtest" id="mt-ID">
         <div class="mtest-head">
           <div>
@@ -308,8 +178,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
           </div>
           <span class="pill pass">pass</span>
         </div>
-        <!-- The scenario is the check. Write it in Gherkin, per the guide linked in SKILL.md: one behaviour, concrete values, what the user sees, no code detail.
-             Steps below are the fewest actions that run it. Order the tests happy path first, then failure, then edge cases (timeout, partial data, permissions, scale, silent failure). -->
         <div class="gherkin">
           <div><span class="kw sc">Scenario:</span> <span class="sc">SCENARIO_TITLE</span></div>
           <div><span class="kw">Given</span> GIVEN_STATE_WITH_CONCRETE_VALUES</div>
@@ -321,10 +189,8 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
         <div class="prep">
           <b>Already prepared</b>
           MANUAL_PREPARED (what the agent built, seeded, or started, and where). Work from <a href="file:///ABSOLUTE/PATH/MANUAL_DIRECTORY/">MANUAL_DIRECTORY</a>.
-          <!-- Anything the human must do first goes in step 1, not here. -->
         </div>
         <ol class="steps">
-          <!-- Repeat li per step. Command is optional when the step is a click or a look. -->
           <li>
             <div class="step-do"><label><input type="checkbox"><span>STEP_ACTION</span></label></div>
             <div class="cmd"><pre>STEP_COMMAND</pre><button type="button" class="copy">Copy</button></div>
@@ -335,7 +201,8 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
         <p class="progress-line"><span class="done-count">0</span> of <span class="step-total">0</span> steps ticked</p>
         <details class="out" id="mt-ID-run">
           <summary>Agent run: MANUAL_WHO, result MANUAL_RESULT</summary>
-          <pre>MANUAL_OUTPUT</pre>
+          <pre>MANUAL_OUTPUT_EXCERPT</pre>
+          <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/evidence/MT_ID.log">full output</a>
         </details>
       </article>
 
@@ -349,7 +216,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
           <table>
             <thead><tr><th>Suite</th><th>Added</th><th>Passed</th><th>Failed</th><th>Skipped</th><th>Output</th></tr></thead>
             <tbody>
-              <!-- One row per suite run -->
               <tr>
                 <td><a href="file:///ABSOLUTE/PATH/SUITE_DIR_OR_FILE">SUITE</a></td>
                 <td>TESTS_ADDED</td><td>PASSED</td><td>FAILED</td><td>SKIPPED</td>
@@ -365,13 +231,12 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
             <table>
               <thead><tr><th>Item</th><th>Check</th><th>Result</th><th>Change</th><th>Evidence</th></tr></thead>
               <tbody>
-                <!-- One row per item. Pill class: pass, fail, or gap. -->
                 <tr id="val-ID">
                   <td class="id"><a href="#ac-ID">VAL_ID</a></td>
                   <td>VAL_TEXT</td>
                   <td><span class="pill pass">pass</span></td>
                   <td><a href="#change-ID">VAL_CHANGE</a></td>
-                  <td><div class="ev"><a href="file:///ABSOLUTE/PATH/TEST_FILE#LINE">VAL_TEST_NAME</a></div><pre>VAL_EVIDENCE</pre></td>
+                  <td><div class="ev"><a href="file:///ABSOLUTE/PATH/TEST_FILE#LINE">VAL_TEST_NAME</a></div><pre>VAL_COMMAND_AND_EXCERPT</pre><div class="ev"><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/evidence/VAL_ID.log">full output</a></div></td>
                 </tr>
               </tbody>
             </table>
@@ -381,7 +246,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
           <table>
             <thead><tr><th>Review</th><th>Verdict</th><th>Open important</th><th>Findings</th></tr></thead>
             <tbody>
-              <!-- One row per review: code review, each expert lens, QA -->
               <tr>
                 <td>REVIEW_NAME</td>
                 <td><span class="pill pass">REVIEW_VERDICT</span></td>
@@ -400,7 +264,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
   </details>
 </section>
 
-<!-- ============ IMPLEMENTATION ============ -->
 <section id="implementation" data-title="Implementation">
   <details class="sec">
     <summary><h2>Implementation</h2><span class="sum">TASKS_DONE / TASKS_TOTAL tasks, <span class="pill deviation">DEVIATIONS deviations</span></span></summary>
@@ -410,7 +273,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
         <table>
           <thead><tr><th>Task</th><th>Covers</th><th>Branch and commits</th><th>Files</th><th>Done</th></tr></thead>
           <tbody>
-            <!-- One row per task in plan.md. Done is a pill: pass when finished, gap when not. -->
             <tr id="task-ID">
               <td><span class="id">TASK_ID</span> TASK_NAME</td>
               <td><a href="#ac-ID">TASK_COVERS</a></td>
@@ -428,13 +290,12 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
         <table>
           <thead><tr><th>Change</th><th>Triage</th><th>What and why</th><th>Spec</th><th>Evidence</th></tr></thead>
           <tbody>
-            <!-- Triage pill class: planned, deviation, or fix. -->
             <tr id="change-ID">
               <td class="id">CHANGE_ID</td>
               <td><span class="pill planned">planned</span></td>
               <td>CHANGE_WHAT. CHANGE_WHY_FOR_A_DEVIATION</td>
               <td><a href="#ac-ID">CHANGE_SPEC</a></td>
-              <td><div class="ev"><a href="CHANGE_COMMIT_URL"><code>CHANGE_SHA</code></a><a href="file:///ABSOLUTE/PATH/FILE#LINE">CHANGE_FILE</a><span class="count">CHANGE_RESULT</span></div><details class="out"><summary>Command and output</summary><pre>CHANGE_EVIDENCE</pre></details></td>
+              <td><div class="ev"><a href="CHANGE_COMMIT_URL"><code>CHANGE_SHA</code></a><a href="file:///ABSOLUTE/PATH/FILE#LINE">CHANGE_FILE</a><span class="count">CHANGE_RESULT</span></div><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/evidence/CHANGE_ID.log">full output</a></td>
             </tr>
           </tbody>
         </table>
@@ -444,76 +305,6 @@ Ids used for cross links: AC rows `ac-ID`, manual tests `mt-ID`, tasks `task-ID`
 </section>
 
 </main>
-<script>
-const sections = [...document.querySelectorAll("main > section")];
-const rail = document.querySelector(".rail");
-const progress = document.querySelector(".progress");
-
-// Right rail
-sections.forEach(s => {
-  const a = document.createElement("a");
-  a.href = "#" + s.id;
-  a.innerHTML = "<span>" + s.dataset.title + "</span>";
-  rail.append(a);
-});
-const links = [...rail.children];
-const mark = i => {
-  links.forEach((l, j) => l.classList.toggle("active", j === i));
-  progress.style.width = ((i + 1) / sections.length * 100) + "%";
-};
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) mark(sections.indexOf(e.target)); });
-}, { rootMargin: "-40% 0px -50% 0px" });
-sections.forEach(s => observer.observe(s));
-// Dot turns red when a section holds a fail or a gap pill
-sections.forEach((s, i) => { if (s.querySelector(".pill.fail, .pill.gap")) links[i].classList.add("attn"); });
-
-// Open every collapsed ancestor of a link target, then scroll to it
-function reveal() {
-  const t = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-  if (!t) return;
-  for (let d = t.closest("details"); d; d = d.parentElement && d.parentElement.closest("details")) d.open = true;
-  if (t.tagName === "DETAILS") t.open = true;
-  t.scrollIntoView();
-}
-addEventListener("hashchange", reveal);
-document.addEventListener("click", e => {
-  const a = e.target.closest('a[href^="#"]');
-  if (!a || a.getAttribute("href") === "#") return;
-  const t = document.getElementById(a.getAttribute("href").slice(1));
-  if (!t) return;
-  e.preventDefault();
-  history.replaceState(null, "", a.getAttribute("href"));
-  reveal();
-});
-reveal();
-
-// Copy buttons
-document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(b.previousElementSibling.innerText); b.textContent = "Copied"; }
-  catch (err) { b.textContent = "Select"; }
-  setTimeout(() => { b.textContent = "Copy"; }, 1500);
-}));
-
-// Step ticks, remembered in this browser
-document.querySelectorAll(".mtest").forEach(test => {
-  const boxes = [...test.querySelectorAll("input[type=checkbox]")];
-  const key = "implement-spec-steps:" + document.title + ":" + test.id;
-  const count = () => {
-    test.querySelector(".done-count").textContent = boxes.filter(b => b.checked).length;
-    test.querySelector(".step-total").textContent = boxes.length;
-  };
-  try {
-    const saved = JSON.parse(localStorage.getItem(key) || "[]");
-    boxes.forEach((b, i) => { b.checked = !!saved[i]; });
-  } catch (err) {}
-  boxes.forEach(b => b.addEventListener("change", () => {
-    try { localStorage.setItem(key, JSON.stringify(boxes.map(x => x.checked))); } catch (err) {}
-    count();
-  }));
-  count();
-});
-mark(0);
-</script>
+<script src="summary.js"></script>
 </body>
 </html>

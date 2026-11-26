@@ -10,7 +10,7 @@ Stay in the lens. Cite a file and line for every claim. Return only the output s
 
 ## Code reviewer
 
-Defects, quality, and plan alignment. Missing behavior, a wrong behavior, a test that does not assert the criterion, and a plan item with no code are in this lens. Leave system shape to the tech lead and leave security, data, contract, and concurrency to those seats when they are running.
+Defects, quality, and plan alignment. Missing behavior, a wrong behavior, a test that does not assert the criterion, a plan item with no code, and a change in the diff that maps to no requirement and no plan item (an unlogged deviation) are in this lens. Leave system shape to the tech lead and leave security, data, contract, and concurrency to those seats when they are running.
 
 ## Tech lead
 
