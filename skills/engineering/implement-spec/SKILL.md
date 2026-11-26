@@ -80,22 +80,33 @@ When every task has reported done, review the combined diff against the base bra
 - **Expert review.** When the diff touches a lens that a generalist reviewer would miss, such as security, data migration, concurrency, performance, or a public contract. Dispatch one reviewer subagent per lens with the diff range, `spec.md`, and `hld.md`.
 - **QA.** When the spec has behaviour a user or caller can observe. Dispatch a QA subagent that checks each acceptance criterion and each validation end to end, beyond the unit tests: run the app, the CLI, or the integration suite. It reports pass or fail per criterion and per validation, with the command and the output.
 
+Every review answers four **definition-of-done** questions, and each reviewer reports a verdict and its evidence per question:
+
+1. **Built as designed.** The code matches `hld.md` (flows, schema, API, budgets) and meets every acceptance criterion.
+2. **Built as planned.** The diff matches `plan.md`: nothing added, nothing dropped. A change in the diff that maps to no task and no row in `changes.md` is an unlogged deviation. It is an Important finding. Log it or revert it.
+3. **Safe to run.** Where the change adds a dependency call, a queue, a flag, or a metric: failure of the dependency is handled, retries are idempotent, in-flight work is safe, the failure stays inside this feature behind its flag, rollback works, and the metrics and alerts the design names exist. Dispatch an expert reviewer for this lens when the diff touches any of those.
+4. **Proven by tests.** Every acceptance criterion and validation has a test that ran, and covers the edge and non-functional cases the plan names. A change to what the tests cover is a recorded deviation, not a silent one.
+
 Wait for every reviewer you dispatched. Fix Critical and Important findings and QA failures in a fresh **implementer subagent** on the task branch the finding belongs to. Do not merge into the integration branch. Each fix that changes behaviour or the plan is a deviation (step 6.4). Re-run the reviews that raised findings until none is Critical or Important. Write Minor findings you did not fix into `testing.md`.
 
-Write `testing.md`: tests added, suites run and their results, the QA result per acceptance criterion and per validation, the review verdicts, and any known gaps. A check outside the automated suite is a manual test. Record each one: the spec item it validates, the directory, the command or the steps, what pass looks like, who ran it, the result, and the output.
+Write `testing.md`: tests added, suites run and their results, the QA result per acceptance criterion and per validation, the review verdicts, and any known gaps. Write the full output of every command you run to `.agent-docs/implement-spec-<slug>/evidence/<id>.log`; the summary links it. A check outside the automated suite is a manual test. Record each one as a Gherkin scenario (see step 8), then: the spec item it validates, the directory, the command or the steps, what pass looks like, who ran it, the result, and the output.
 
 ## 8. Summary, then commit
 
 Only after step 7 has no open Critical or Important finding.
 
-Write `summary.html` from [summary-template.html](summary-template.html). Replace every UPPERCASE placeholder. Repeat a marked row, tile, or article once per item. The page is the record, not a digest: carry `spec.md`, `plan.md`, `changes.md`, and `testing.md`. Do not drop the Metrics section, the Changes table, or the Validations table. Drop Manual tests when `testing.md` has none, remove its nav link, and say so.
+Read [summary-guide.md](summary-guide.md), then write `summary.src.html` from [summary-template.html](summary-template.html) and build it with `build-summary.py` as the guide says. The page is the record, not a digest: carry `spec.md`, `plan.md`, `changes.md`, and `testing.md`. The build fails on a placeholder left in or a broken link. Fix the source and build again.
 
-- **Metrics.** One tile per count: commits, files, lines added, lines removed, tests added, passed, failed, skipped, validations passed, validations failed, validation gaps, deviations, open important findings. Each number is the output of a command or a count of rows on this page. `git diff --stat` and `git rev-list --count` against the base give the diff counts. The suite output gives passed, failed, and skipped. Put those commands in `METRIC_COMMANDS`. Delete a tile you cannot measure and name it in chat. Do not round a number and do not invent one.
-- **Changes.** One row per task, plus one row per deviation. Triage is `planned`, `deviation`, or `review fix`. A review fix is that deviation's row, not a second row. Set the pill class to `planned`, `deviation`, or `fix`. Spec is the acceptance criterion or validation the change serves, or `none`. Evidence is the task branch, the commit, and the test or command, with its result. Paste the command and the output. A row with spec `none` stays on the page.
-- **Validations.** One row per acceptance criterion and per validation in `spec.md`. Result is `pass`, `fail`, or `gap`, and the pill class matches. Evidence is the command and the output, or the test name and its result. Change names the Changes row that covers it. A fail or a gap means step 7 is not finished. Go back and fix it before asking.
-- **Manual tests.** One article per manual test in `testing.md`. Name the spec item it validates, the directory, the command or the steps, what pass looks like, who ran it, and the output. The pill is `pass`, `fail`, or `gap`. A manual test that was not run is a gap. A fail or a gap means step 7 is not finished.
+Sections, in order. Overview and Validations are open. Spec and Implementation are collapsed.
 
-Open `summary.html` with `open` and give the path in chat. There is no server.
+- **Overview.** Status cards (spec to implementation, tests, manual tests, reviews), the four-row definition of done, "Needs your attention" with each open item linked, and two collapsed sub-sections: spec source, size and HLD; Git context (branches, commits, worktrees, pull request, `.agent-docs` files, diff counts).
+- **Spec.** The goal and spec link, then one row per acceptance criterion and validation: status, test coverage (`Existing test` or `New`), evidence links, and the change that built it. Then out of scope.
+- **Validations.** Manual acceptance tests first, each a Gherkin scenario with prepared setup and the fewest steps. Then, collapsed, automated validations, test suites, and reviews.
+- **Implementation.** Tasks and the Changes triage (`planned`, `deviation`, `review fix`). A row with spec `none` stays.
+
+There is no Metrics section: each count sits in its section and is measured by a command or counted from rows. Every path, branch, commit, ticket, and test is a link. A fail or a gap anywhere means step 7 is not finished. Go back and fix it before asking.
+
+Open the built `summary.html` with `open` and give the path in chat. There is no server.
 
 Ask once, with `AskQuestion`:
 
@@ -141,7 +152,7 @@ Post on the parent: the source issue, or the parent the input names. With severa
 | "The task branches already committed, so merge them." | Those commits save the work. The integration branch changes only after they choose Commit. |
 | "Show the summary after the merge." | The page is how they choose commit or adjust. The merge follows Commit. |
 | "QA passed, skip the page." | Step 8 runs every time. Open the page and wait. |
-| "The diff is small, so skip the counts." | The tiles are the counts. Measure them. |
+| "The diff is small, so skip the counts." | Measure every count on the page. |
 | "QA tried it, so there is no manual test to write down." | A check outside the suite is a manual test. Record the spec item, the steps, and the output. |
 
 ## Red flags
@@ -159,7 +170,8 @@ Stop if you are about to:
 - Continue after a deviation that changes an approved HLD decision without asking the human
 - Merge into the integration branch, or commit the change onto the branch the human is on, before they choose Commit
 - Open the summary with an acceptance criterion or validation missing, or with evidence that is only a claim
-- Put a metric on the page that you did not count from a command or from the rows
-- Leave a manual test from `testing.md` off the page, or leave the Manual tests section up when there are none
+- Put a number on the page that you did not count from a command or from the rows
+- Print a path, branch, commit, or ticket on the page without a link to it
+- Leave a manual test from `testing.md` off the page, or leave manual tests up when there are none
 - Treat a task-branch commit as the commit they accepted
 - Commit when they chose Adjust, or when they have not answered

@@ -2,251 +2,309 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Implementation: TITLE</title>
-<style>
-  :root {
-    color-scheme: light dark;
-    --fg: light-dark(#1c1c1c, #eceae4);
-    --muted: light-dark(#5c5a55, #b3b0a8);
-    --bg: light-dark(#fbfaf7, #121212);
-    --panel: light-dark(#fff, #1b1b1a);
-    --line: light-dark(#e2e0da, #343432);
-    --accent: light-dark(#2f5bd3, #8aa8ff);
-    --planned-bg: light-dark(#e7eefc, #1c2744); --planned-fg: light-dark(#1e3a8a, #c9d7ff);
-    --dev-bg: light-dark(#fff1d6, #4a3912); --dev-fg: light-dark(#7a5200, #f3dca6);
-    --fix-bg: light-dark(#f3e8ff, #3b2760); --fix-fg: light-dark(#5b21b6, #e4d4ff);
-    --pass-bg: light-dark(#e5f4e8, #1d3a26); --pass-fg: light-dark(#1d5a2e, #bfe8cb);
-    --fail-bg: light-dark(#fde8e8, #4a1c1c); --fail-fg: light-dark(#8f1d1d, #ffc9c9);
-    --gap-bg: light-dark(#eeeae4, #2a2a28); --gap-fg: light-dark(#3f3d38, #d4d0c8);
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font: 15px/1.5 "Iowan Old Style", Palatino, Georgia, serif;
-  }
-  body > header {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--panel);
-    border-bottom: 1px solid var(--line);
-    padding: 16px 28px 12px;
-  }
-  body > header h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em; }
-  .status {
-    display: inline-block;
-    margin-bottom: 8px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--dev-bg);
-    color: var(--dev-fg);
-    font: 600 12px/1.4 ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  body > header p { margin: 0; color: var(--muted); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin: 0; }
-  .metric { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
-  .metric b { display: block; font: 600 22px/1.1 ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.03em; }
-  .metric span { color: var(--muted); font: 12px/1.3 ui-sans-serif, system-ui, sans-serif; }
-  .source { margin: 10px 0 0; color: var(--muted); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
-  .test { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0 0 12px; }
-  .test-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-  .test h3 { margin: 0; font-size: 17px; }
-  .sub { margin: 2px 0 0; color: var(--muted); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
-  nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font: 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
-  nav a { color: var(--accent); text-decoration: none; }
-  main { max-width: 980px; margin: 0 auto; padding: 28px 28px 80px; }
-  section { margin: 0 0 36px; }
-  h2 {
-    margin: 0 0 12px;
-    font: 600 13px/1.2 ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .meta { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; margin: 0; }
-  .meta dt { color: var(--muted); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
-  .meta dd { margin: 0; }
-  table { width: 100%; border-collapse: collapse; background: var(--panel); }
-  th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
-  th { font: 600 12px/1.3 ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-  pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-  .pill {
-    display: inline-block;
-    padding: 1px 7px;
-    border-radius: 999px;
-    font: 600 12px/1.5 ui-sans-serif, system-ui, sans-serif;
-    white-space: nowrap;
-  }
-  .planned { background: var(--planned-bg); color: var(--planned-fg); }
-  .deviation { background: var(--dev-bg); color: var(--dev-fg); }
-  .fix { background: var(--fix-bg); color: var(--fix-fg); }
-  .pass { background: var(--pass-bg); color: var(--pass-fg); }
-  .fail { background: var(--fail-bg); color: var(--fail-fg); }
-  .gap { background: var(--gap-bg); color: var(--gap-fg); }
-  ul { margin: 8px 0 0; padding-left: 18px; }
-  @media print {
-    header { position: static; }
-    pre { max-height: none; }
-  }
-</style>
+<link rel="stylesheet" href="summary.css">
 </head>
 <body>
-<header>
-  <div class="status">Awaiting commit</div>
-  <h1>TITLE</h1>
-  <p>Nothing is on the integration branch yet. Commit lands the task branches. Adjust changes the work and this page first.</p>
-  <nav>
-    <a href="#overview">Overview</a>
-    <a href="#metrics">Metrics</a>
-    <a href="#spec">Spec</a>
-    <a href="#tasks">Tasks</a>
-    <a href="#changes">Changes</a>
-    <a href="#validations">Validations</a>
-    <a href="#manual">Manual tests</a>
-    <a href="#reviews">Reviews</a>
-  </nav>
-</header>
+<div class="progress"></div>
+<nav class="rail" aria-label="Sections"></nav>
 <main>
-  <section id="overview">
-    <h2>Overview</h2>
-    <dl class="meta">
-      <dt>Spec</dt><dd>SPEC_SOURCE</dd>
-      <dt>Size</dt><dd>SIZE_AND_WHY</dd>
-      <dt>HLD</dt><dd>HLD_SUMMARY</dd>
-      <dt>Base</dt><dd>BASE_BRANCH</dd>
-      <dt>Integration</dt><dd>INTEGRATION_BRANCH (unchanged)</dd>
-      <dt>Task branches</dt><dd>TASK_BRANCHES</dd>
-      <dt>Date</dt><dd>DATE</dd>
-    </dl>
-  </section>
 
-  <section id="metrics">
-    <h2>Metrics</h2>
-    <div class="metrics">
-      <!-- Repeat a tile per measured count. Delete a tile you cannot measure. -->
-      <div class="metric"><b>COMMITS</b><span>commits</span></div>
-      <div class="metric"><b>FILES</b><span>files</span></div>
-      <div class="metric"><b>LINES_ADDED</b><span>lines added</span></div>
-      <div class="metric"><b>LINES_REMOVED</b><span>lines removed</span></div>
-      <div class="metric"><b>TESTS_ADDED</b><span>tests added</span></div>
-      <div class="metric"><b>PASSED</b><span>passed</span></div>
-      <div class="metric"><b>FAILED</b><span>failed</span></div>
-      <div class="metric"><b>SKIPPED</b><span>skipped</span></div>
-      <div class="metric"><b>VAL_PASS</b><span>validations passed</span></div>
-      <div class="metric"><b>VAL_FAIL</b><span>validations failed</span></div>
-      <div class="metric"><b>VAL_GAP</b><span>validation gaps</span></div>
-      <div class="metric"><b>DEVIATIONS</b><span>deviations</span></div>
-      <div class="metric"><b>OPEN_IMPORTANT</b><span>open important</span></div>
-    </div>
-    <p class="source">METRIC_COMMANDS</p>
-  </section>
+<header class="top">
+  <div class="top-meta">
+    <span class="pill deviation">Awaiting commit</span>
+    <span>DATE</span>
+  </div>
+  <h1>TITLE</h1>
+  <p class="lede">Nothing is on the integration branch yet. Commit lands the task branches. Adjust changes the work and this page first.</p>
+</header>
 
-  <section id="spec">
-    <h2>Spec</h2>
-    <p>GOAL</p>
-    <ul>
-      <li>ACCEPTANCE_OR_VALIDATION</li>
-    </ul>
-    <h2>Out of scope</h2>
-    <ul>
-      <li>OUT_OF_SCOPE_ITEM</li>
-    </ul>
-  </section>
+<section id="overview" data-title="Overview">
+  <details class="sec" open>
+    <summary><h2>Overview</h2><span class="sum">OVERVIEW_ONE_LINE</span></summary>
+    <div class="body">
 
-  <section id="tasks">
-    <h2>Tasks</h2>
-    <table>
-      <thead>
-        <tr><th>Task</th><th>Covers</th><th>Files</th><th>Done</th></tr>
-      </thead>
-      <tbody>
-        <!-- Repeat this tr once per task -->
-        <tr>
-          <td>TASK_ID TASK_NAME</td>
-          <td>TASK_COVERS</td>
-          <td>TASK_FILES</td>
-          <td>TASK_DONE</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="changes">
-    <h2>Changes</h2>
-    <p>One row per task, plus one row per deviation. A review fix is the deviation's row, with triage <span class="pill fix">review fix</span>, not a second row. Spec is the acceptance criterion or validation the change serves, or <span class="pill gap">none</span>.</p>
-    <table>
-      <thead>
-        <tr><th>Change</th><th>Triage</th><th>What</th><th>Spec</th><th>Evidence</th></tr>
-      </thead>
-      <tbody>
-        <!-- Repeat this tr once per change. Pill class is planned, deviation, or fix. -->
-        <tr>
-          <td>CHANGE_ID</td>
-          <td><span class="pill planned">planned</span></td>
-          <td>CHANGE_WHAT</td>
-          <td>CHANGE_SPEC</td>
-          <td><pre>CHANGE_EVIDENCE</pre></td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="validations">
-    <h2>Validations</h2>
-    <p>One row per acceptance criterion and per validation in the spec. Evidence is the command and the output, or the test name and its result.</p>
-    <table>
-      <thead>
-        <tr><th>Item</th><th>Check</th><th>Result</th><th>Change</th><th>Evidence</th></tr>
-      </thead>
-      <tbody>
-        <!-- Repeat this tr once per criterion and per validation. Pill class is pass, fail, or gap. -->
-        <tr>
-          <td>VAL_ID</td>
-          <td>VAL_TEXT</td>
-          <td><span class="pill pass">pass</span></td>
-          <td>VAL_CHANGE</td>
-          <td><pre>VAL_EVIDENCE</pre></td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="manual">
-    <h2>Manual tests</h2>
-    <p>Checks outside the automated suite. Each one validates a spec item. Delete this section when there are none.</p>
-    <!-- Repeat this article once per manual test. -->
-    <article class="test">
-      <div class="test-head">
-        <div>
-          <h3>MANUAL_TITLE</h3>
-          <p class="sub">Validates MANUAL_SPEC. Run from MANUAL_DIRECTORY.</p>
-        </div>
-        <span class="pill pass">pass</span>
+      <h3>Where it stands</h3>
+      <div class="cards">
+        <a class="card" href="#spec-criteria">
+          <div class="k">Acceptance criteria</div>
+          <div class="v">AC_PASS / AC_TOTAL pass</div>
+          <div class="d">AC_FAIL fail, AC_GAP gap</div>
+        </a>
+        <a class="card" href="#impl-tasks">
+          <div class="k">Implementation</div>
+          <div class="v">TASKS_DONE / TASKS_TOTAL tasks</div>
+          <div class="d">DEVIATIONS deviations, REVIEW_FIXES review fixes</div>
+        </a>
+        <a class="card" href="#auto-tests">
+          <div class="k">Automated tests</div>
+          <div class="v">PASSED passed</div>
+          <div class="d">FAILED failed, SKIPPED skipped, TESTS_ADDED added</div>
+        </a>
+        <a class="card" href="#manual-tests">
+          <div class="k">Manual acceptance</div>
+          <div class="v">MANUAL_COUNT tests</div>
+          <div class="d">Steps for you: MANUAL_STEPS_TOTAL. Agent ran: MANUAL_AGENT_PASS pass, MANUAL_AGENT_GAP not run</div>
+        </a>
+        <a class="card" href="#reviews">
+          <div class="k">Reviews</div>
+          <div class="v">OPEN_IMPORTANT open important</div>
+          <div class="d">MINOR_UNFIXED minor not fixed</div>
+        </a>
       </div>
-      <p>MANUAL_STEPS</p>
-      <pre>MANUAL_COMMAND</pre>
-      <p class="sub">Pass looks like MANUAL_PASS. Ran by MANUAL_WHO.</p>
-      <pre>MANUAL_OUTPUT</pre>
-    </article>
-  </section>
 
-  <section id="reviews">
-    <h2>Reviews and testing</h2>
-    <ul>
-      <li>REVIEW_VERDICT</li>
-      <li>SUITE_RESULT</li>
-      <li>MINOR_OR_GAP</li>
-    </ul>
-  </section>
+      <h3>Definition of done</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Question</th><th>Verdict</th><th>Basis</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Built as designed</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#spec-criteria">DOD_DESIGN_BASIS</a><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/hld.md">hld.md</a></div></td>
+            </tr>
+            <tr>
+              <td>Built as planned</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#changes">DOD_PLAN_BASIS</a></div></td>
+            </tr>
+            <tr>
+              <td>Safe to run</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#reviews">DOD_SAFETY_BASIS</a></div></td>
+            </tr>
+            <tr>
+              <td>Proven by tests</td>
+              <td><span class="pill pass">pass</span></td>
+              <td><div class="ev"><a href="#auto-tests">DOD_TESTS_BASIS</a></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Needs your attention</h3>
+      <ul class="actions">
+        <li><span class="pill gap">ACTION_KIND</span><span>ACTION_WHAT_TO_DO, <a href="#mt-ID">ACTION_TARGET</a></span></li>
+        <li class="none">Nothing else needs you. Choose Commit or Adjust in chat.</li>
+      </ul>
+
+      <details class="sub" id="spec-context">
+        <summary>Spec source, size and HLD</summary>
+        <div class="body">
+          <dl class="kv">
+            <dt>Spec</dt><dd><a href="SPEC_SOURCE_URL_OR_FILE_URL">SPEC_SOURCE</a>, copied to <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/spec.md">spec.md</a></dd>
+            <dt>Size</dt><dd>SIZE_AND_WHY</dd>
+            <dt>HLD</dt><dd><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/hld.md">hld.md</a>: HLD_SUMMARY</dd>
+          </dl>
+        </div>
+      </details>
+
+      <details class="sub" id="git-context">
+        <summary>Git context <span class="note">BASE_BRANCH to INTEGRATION_BRANCH, COMMITS commits, FILES files, +LINES_ADDED / -LINES_REMOVED</span></summary>
+        <div class="body">
+          <dl class="kv">
+            <dt>Base branch</dt><dd><a href="BASE_BRANCH_URL">BASE_BRANCH</a> at <a href="BASE_COMMIT_URL"><code>BASE_SHA</code></a></dd>
+            <dt>Integration branch</dt><dd><a href="INTEGRATION_BRANCH_URL">INTEGRATION_BRANCH</a>, unchanged, still at <a href="INTEGRATION_COMMIT_URL"><code>INTEGRATION_SHA</code></a></dd>
+            <dt>Task branches</dt>
+            <dd>
+              <div><a href="TASK_BRANCH_URL">TASK_BRANCH</a>, <a href="#task-ID">TASK_ID</a>, <a href="TASK_COMMIT_URL"><code>TASK_SHA</code></a>, worktree <a href="file:///ABSOLUTE/PATH/TO/WORKTREE/">WORKTREE_PATH</a></div>
+            </dd>
+            <dt>Pull request</dt><dd>PR_LINK_OR_NONE_YET</dd>
+            <dt>Work directory</dt><dd><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/">.agent-docs/implement-spec-SLUG/</a>: <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/spec.md">spec.md</a>, <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/plan.md">plan.md</a>, <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/changes.md">changes.md</a>, <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/testing.md">testing.md</a>, HLD_LINK_IF_ANY</dd>
+          </dl>
+          <h3>Diff against the base</h3>
+          <table>
+            <thead><tr><th>Commits</th><th>Files</th><th>Lines added</th><th>Lines removed</th></tr></thead>
+            <tbody><tr><td>COMMITS</td><td>FILES</td><td>LINES_ADDED</td><td>LINES_REMOVED</td></tr></tbody>
+          </table>
+          <p class="note src">METRIC_COMMANDS_FOR_DIFF</p>
+        </div>
+      </details>
+
+    </div>
+  </details>
+</section>
+
+<section id="spec" data-title="Spec">
+  <details class="sec">
+    <summary><h2>Spec</h2><span class="sum"><span class="pill pass">AC_PASS pass</span><span class="pill fail">AC_FAIL fail</span><span class="pill gap">AC_GAP gap</span></span></summary>
+    <div class="body">
+      <h3>Goal</h3>
+      <p>GOAL <a href="SPEC_SOURCE_URL_OR_FILE_URL">Spec</a></p>
+
+      <h3 id="spec-criteria">Acceptance criteria</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>ID</th><th>Criterion</th><th>Status</th><th>Test</th><th>Evidence</th><th>Built by</th></tr></thead>
+          <tbody>
+            <tr id="ac-ID">
+              <td class="id">AC_ID</td>
+              <td>AC_TEXT <a href="file:///ABSOLUTE/PATH/spec.md#LINE">spec line</a></td>
+              <td><span class="pill pass">pass</span></td>
+              <td><span class="pill planned">Existing test</span> or <span class="pill fix">New</span></td>
+              <td><div class="ev">
+                <a href="file:///ABSOLUTE/PATH/TEST_FILE#LINE">TEST_NAME</a>
+                <span class="count">N tests, all pass</span>
+                <a href="#mt-ID">manual MT_ID</a>
+                <a href="#val-ID">output</a>
+              </div></td>
+              <td><a href="#change-ID">CHANGE_ID</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Out of scope</h3>
+      <ul>
+        <li>OUT_OF_SCOPE_ITEM</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<section id="validations" data-title="Validations">
+  <details class="sec" open>
+    <summary><h2>Validations</h2><span class="sum">MANUAL_COUNT manual tests for you, <span class="pill pass">PASSED passed</span><span class="pill fail">FAILED failed</span></span></summary>
+    <div class="body">
+
+      <h3 id="manual-tests">Manual acceptance tests</h3>
+      <p class="note">Run these yourself to see the change work. Each is the fewest steps that show the behaviour. Everything you need is prepared. Tick a step as you go. If something differs from what to expect, choose Adjust and say which step.</p>
+      <article class="mtest" id="mt-ID">
+        <div class="mtest-head">
+          <div>
+            <h4>MT_ID: MANUAL_TITLE</h4>
+            <p class="why">Kind: MANUAL_KIND (happy path, failure, edge case, scale, or entitlement). Checks <a href="#ac-ID">AC_ID</a>. About MANUAL_MINUTES minutes. Agent ran it already: <a href="#mt-ID-run">see output</a>.</p>
+          </div>
+          <span class="pill pass">pass</span>
+        </div>
+        <div class="gherkin">
+          <div><span class="kw sc">Scenario:</span> <span class="sc">SCENARIO_TITLE</span></div>
+          <div><span class="kw">Given</span> GIVEN_STATE_WITH_CONCRETE_VALUES</div>
+          <div class="and"><span class="kw">And</span> ANOTHER_GIVEN</div>
+          <div><span class="kw">When</span> THE_ONE_THING_THAT_HAPPENS</div>
+          <div><span class="kw">Then</span> VISIBLE_CHECKABLE_RESULT</div>
+          <div class="and"><span class="kw">And</span> ANOTHER_RESULT</div>
+        </div>
+        <div class="prep">
+          <b>Already prepared</b>
+          MANUAL_PREPARED (what the agent built, seeded, or started, and where). Work from <a href="file:///ABSOLUTE/PATH/MANUAL_DIRECTORY/">MANUAL_DIRECTORY</a>.
+        </div>
+        <ol class="steps">
+          <li>
+            <div class="step-do"><label><input type="checkbox"><span>STEP_ACTION</span></label></div>
+            <div class="cmd"><pre>STEP_COMMAND</pre><button type="button" class="copy">Copy</button></div>
+            <div class="expect"><b>Expect:</b> STEP_EXPECTED</div>
+          </li>
+        </ol>
+        <p class="pass-when"><b>Pass when</b> MANUAL_PASS_WHEN. Fail if MANUAL_FAIL_WHEN.</p>
+        <p class="progress-line"><span class="done-count">0</span> of <span class="step-total">0</span> steps ticked</p>
+        <details class="out" id="mt-ID-run">
+          <summary>Agent run: MANUAL_WHO, result MANUAL_RESULT</summary>
+          <pre>MANUAL_OUTPUT_EXCERPT</pre>
+          <a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/evidence/MT_ID.log">full output</a>
+        </details>
+      </article>
+
+      <details class="sub" id="auto-validations">
+        <summary>Automated validations, reviews and testing
+          <span class="sum" style="margin-left:0"><span class="pill pass">PASSED passed</span><span class="pill fail">FAILED failed</span><span class="pill gap">SKIPPED skipped</span></span>
+        </summary>
+        <div class="body">
+
+          <h3 id="auto-tests">Test suites</h3>
+          <table>
+            <thead><tr><th>Suite</th><th>Added</th><th>Passed</th><th>Failed</th><th>Skipped</th><th>Output</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><a href="file:///ABSOLUTE/PATH/SUITE_DIR_OR_FILE">SUITE</a></td>
+                <td>TESTS_ADDED</td><td>PASSED</td><td>FAILED</td><td>SKIPPED</td>
+                <td><a href="file:///ABSOLUTE/PATH/SUITE_LOG">log</a></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="note src">METRIC_COMMANDS_FOR_TESTS</p>
+
+          <h3>Validations</h3>
+          <p class="note">One row per acceptance criterion and per validation in the spec. Evidence is the command and the output, or the test name and its result. A fail or a gap means review is not finished.</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Item</th><th>Check</th><th>Result</th><th>Change</th><th>Evidence</th></tr></thead>
+              <tbody>
+                <tr id="val-ID">
+                  <td class="id"><a href="#ac-ID">VAL_ID</a></td>
+                  <td>VAL_TEXT</td>
+                  <td><span class="pill pass">pass</span></td>
+                  <td><a href="#change-ID">VAL_CHANGE</a></td>
+                  <td><div class="ev"><a href="file:///ABSOLUTE/PATH/TEST_FILE#LINE">VAL_TEST_NAME</a></div><pre>VAL_COMMAND_AND_EXCERPT</pre><div class="ev"><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/evidence/VAL_ID.log">full output</a></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="reviews">Reviews</h3>
+          <table>
+            <thead><tr><th>Review</th><th>Verdict</th><th>Open important</th><th>Findings</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>REVIEW_NAME</td>
+                <td><span class="pill pass">REVIEW_VERDICT</span></td>
+                <td>OPEN_IMPORTANT</td>
+                <td><a href="file:///ABSOLUTE/PATH/REVIEW_REPORT">report</a> REVIEW_FINDINGS_FIXED_AND_LINKED</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Minor findings not fixed, and known gaps</h3>
+          <ul>
+            <li><a href="file:///ABSOLUTE/PATH/FILE#LINE">MINOR_OR_GAP</a></li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </details>
+</section>
+
+<section id="implementation" data-title="Implementation">
+  <details class="sec">
+    <summary><h2>Implementation</h2><span class="sum">TASKS_DONE / TASKS_TOTAL tasks, <span class="pill deviation">DEVIATIONS deviations</span></span></summary>
+    <div class="body">
+      <h3 id="impl-tasks">Tasks</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Task</th><th>Covers</th><th>Branch and commits</th><th>Files</th><th>Done</th></tr></thead>
+          <tbody>
+            <tr id="task-ID">
+              <td><span class="id">TASK_ID</span> TASK_NAME</td>
+              <td><a href="#ac-ID">TASK_COVERS</a></td>
+              <td><a href="TASK_BRANCH_URL">TASK_BRANCH</a> <a href="TASK_COMMIT_URL"><code>TASK_SHA</code></a></td>
+              <td><div class="ev"><a href="file:///ABSOLUTE/PATH/FILE">TASK_FILE</a></div></td>
+              <td><span class="pill pass">TASK_DONE</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="changes">Changes triage</h3>
+      <p class="note">One row per task, plus one row per deviation. A review fix is the deviation's row, triage <span class="pill fix">review fix</span>, not a second row. Spec is the acceptance criterion or validation the change serves, or <span class="pill gap">none</span>. A row with spec none stays.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Change</th><th>Triage</th><th>What and why</th><th>Spec</th><th>Evidence</th></tr></thead>
+          <tbody>
+            <tr id="change-ID">
+              <td class="id">CHANGE_ID</td>
+              <td><span class="pill planned">planned</span></td>
+              <td>CHANGE_WHAT. CHANGE_WHY_FOR_A_DEVIATION</td>
+              <td><a href="#ac-ID">CHANGE_SPEC</a></td>
+              <td><div class="ev"><a href="CHANGE_COMMIT_URL"><code>CHANGE_SHA</code></a><a href="file:///ABSOLUTE/PATH/FILE#LINE">CHANGE_FILE</a><span class="count">CHANGE_RESULT</span></div><a href="file:///ABSOLUTE/PATH/.agent-docs/implement-spec-SLUG/evidence/CHANGE_ID.log">full output</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</section>
+
 </main>
+<script src="summary.js"></script>
 </body>
 </html>
