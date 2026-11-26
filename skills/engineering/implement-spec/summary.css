@@ -103,7 +103,8 @@ details.out > summary { cursor: pointer; color: var(--muted); }
 .prep b { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
 ol.steps { list-style: none; counter-reset: step; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
 ol.steps > li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 0 10px; }
-ol.steps > li::before { content: counter(step); width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--panel); display: grid; place-items: center; font: 600 12px var(--sans); margin-top: 2px; }
+ol.steps > li::before { content: counter(step); grid-column: 1; grid-row: 1; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--panel); display: grid; place-items: center; font: 600 12px var(--sans); margin-top: 2px; }
+ol.steps > li > * { grid-column: 2; }
 .step-do { font-weight: 600; }
 .step-do label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
 .step-do input { margin-top: 5px; }
