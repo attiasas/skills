@@ -12,17 +12,27 @@ Stay in the lens. Cite a file and line for every claim. Return only the output s
 
 Defects, quality, and plan alignment. Missing behavior, a wrong behavior, a test that does not assert the criterion, and a plan item with no code are in this lens. Leave system shape to the tech lead and leave security, data, contract, and concurrency to those seats when they are running.
 
+Also check, and file only what the diff gets wrong:
+
+- **Design match.** The code implements the approved design. A deviation is a finding unless the ticket or PR records that it was agreed.
+- **Errors and retries.** No swallowed error. A retried or replayed call is safe.
+- **Edge cases.** Each edge case the plan or test plan names is handled.
+- **Performance.** No N+1 query, unbounded loop, or unbounded result set. Stays inside any budget the design states.
+- **Tests.** New logic has a test. A bug fix has a test that fails without the fix. No sleep, no order dependence, nothing flaky.
+- **Observability and rollout.** The metrics and alerts the design names are present. A risky change sits behind the flag the design names, and turning it off works.
+- **Readability.** Clear names, no dead code, comments that say why. Docs and the runbook change with the behavior.
+
 ## Tech lead
 
 Whether the design holds across components. Name the components, the direction of each new dependency, and the seam. A boundary or contract that cannot ship or roll back independently is in this lens. Do not restate a line-by-line review.
 
 ## Security
 
-Auth, secrets, personal data, permissions, and untrusted input. Name the trust boundary. A finding is in this lens only when the diff crosses it.
+Auth, secrets, personal data, permissions, and untrusted input. Name the trust boundary. A finding is in this lens only when the diff crosses it. Input is validated and authorization is checked at that boundary. No secret or personal data appears in code or in logs.
 
 ## Data
 
-Schema, migration, and backfill. Consistency, rollback of the migration, and what old rows do after the change are in this lens.
+Schema, migration, and backfill. Consistency, rollback of the migration, backward compatibility with data and readers already deployed, and what old rows do after the change are in this lens.
 
 ## Contract
 
@@ -38,7 +48,7 @@ Run the checks. Do not judge design.
 
 On a task checkpoint, run the tests that cover the diff. A criterion that needs the full system, and cannot be run yet, is a gap. On the before-merge bar, every observable acceptance criterion needs a real command and its output. A unit test counts only for the criterion it asserts. A sentence with no command is a gap.
 
-Add a manual validation for an observable criterion the tests do not exercise. One command, the directory, what it covers, and what a pass looks like. If you ran it, include the output and your seat name. If you did not, say nobody has run it.
+Add an acceptance test for an observable criterion the tests do not exercise. Write it as one Gherkin scenario: Given the starting state, When the one action, Then the observable result that means pass. Add the one command that runs it and the directory. If you ran it, include the output and your seat name. If you did not, say nobody has run it.
 
 ## Reviewer output
 
@@ -75,12 +85,15 @@ Include Prior only on a follow-up. `fixed` means the current tree no longer has 
   output:
   who:
 
-### Manual
+### Acceptance tests
 - title:
   covers:
+  scenario:
+    given:
+    when:
+    then:
   directory:
   command:
-  pass:
   ran:
   output:
 ```

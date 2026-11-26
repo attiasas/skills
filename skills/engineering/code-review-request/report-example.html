@@ -285,7 +285,7 @@ Tests  1 failed</pre>
               <td>A custom index path outside the data directory is rejected.</td>
               <td><span class="pill gap">gap</span></td>
               <td>Nobody</td>
-              <td>No command has been run. The manual check below is the one to run.</td>
+              <td>No command has been run. The acceptance test below is the one to run.</td>
             </tr>
           </tbody>
         </table>
@@ -296,7 +296,7 @@ Tests  1 failed</pre>
   <section>
     <details class="block" open>
       <summary>
-        <h2>Manual validations <span class="count">1 still open</span></h2>
+        <h2>Acceptance tests <span class="count">1 still open</span></h2>
       </summary>
       <div class="body">
         <article class="item">
@@ -308,9 +308,12 @@ Tests  1 failed</pre>
             <span class="pill open">Not run</span>
           </header>
           <div class="steps">
+            <pre>Given a data directory at ./data
+When I run node cli.js --index /etc/passwd
+Then it exits non-zero
+ And it prints "path must stay under the data directory"</pre>
             <p>Run</p>
             <pre>node cli.js --index /etc/passwd</pre>
-            <p class="expect"><strong>Pass looks like</strong> a non-zero exit and <code>path must stay under the data directory</code>.</p>
             <p class="sub">Nobody has run this. The task checkpoint left it as a gap.</p>
           </div>
         </article>
@@ -324,9 +327,12 @@ Tests  1 failed</pre>
             <span class="pill pass">Ran · QA subagent</span>
           </header>
           <div class="steps">
+            <pre>Given an index with missing, stale, corrupt, and extra entries
+When I run node cli.js repair --index fixtures/stale
+Then stdout lists missing, stale, corrupt, and extra counts
+ And it exits 0</pre>
             <p>Run</p>
             <pre>node cli.js repair --index fixtures/stale</pre>
-            <p class="expect"><strong>Pass looks like</strong> stdout containing <code>missing</code>, <code>stale</code>, <code>corrupt</code>, and <code>extra</code>.</p>
             <p class="sub">QA subagent ran it on 18 Nov 2026.</p>
             <pre>missing  2
 stale    1
