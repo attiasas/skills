@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: Drafts a verified spec and publishes it to GitHub issues or Jira, or writes it locally when asked or when it is for implement-spec, only after the shown body is approved. A local file is the input implement-spec takes. Applies a triage label only when that label is already in use and the human approved it.
+description: Drafts a verified spec with Gherkin acceptance scenarios and publishes it to GitHub issues or Jira, or writes it locally when asked or when it is for implement-spec, only after the shown body is approved. A local file is the input implement-spec takes. Applies a triage label only when that label is already in use and the human approved it.
 ---
 
 # To spec
@@ -53,12 +53,25 @@ Write these sections. On a tracker publish, use the body format from the tracker
 
 **Steps to reproduce.** Bugs only. A numbered list a support engineer can follow in the UI or CLI, then one Expected and one Actual line. Placeholder names (`repo-a`), not code paths. Say so if the steps come from reading code rather than a run.
 
-**Acceptance criteria.** What must be true when it's done. Binary, unambiguous, testable, outcome-focused. As many as the work needs.
+**Acceptance criteria.** What must be true when it's done, written as Gherkin scenarios. Each scenario is binary, testable, and outcome-focused.
 
+```gherkin
+Scenario: Developer downloads a malicious package
+  Given a remote repository with blocking enabled
+  When a developer downloads a package flagged as malicious
+  Then the download is blocked
+  And the developer sees why, with a link to the violation
+```
+
+- One scenario, one behavior. Split "configures and runs" into two.
+- `Given` is the starting state, `When` is the single action or event, `Then` is something visible and checkable. `And` adds a step to any of them.
+- Use concrete values ("10,000 artifacts", "within 5 minutes"), not "many" or "soon". Say what the user sees ("the user sees the policy saved"), not what the code returns ("the API returns 200").
+- Write the happy path first, then ask how it fails: timeouts, partial data, permissions, upgrades, air-gapped, scale, and a silent failure (an empty result where there used to be data). Add a scenario for each that applies to this work item. Do not pad with ones that don't.
 - Capabilities, not implementation: "workspaces can be created, listed, renamed and deleted" — not the table that stores them.
 - State constraints as outcomes. "A repo with no workspaces behaves exactly as it does today" — not "a default workspace row is created".
+- A flow you cannot write as a scenario is not ready. Ask for the missing fact instead of guessing the `Then`.
 
-**Validations.** The checks that prove the acceptance criteria. Each validation is an acceptance criterion: the check, and what pass looks like. As many as the work needs. One validation can cover more than one acceptance criterion. Every acceptance criterion has at least one validation.
+**Validations.** The checks that prove the scenarios. Each validation names the check and what pass looks like. Every scenario has at least one validation, and one validation can cover more than one scenario. Mark each scenario **Existing test** (with a link) or **New** (no coverage today; the implementer plans the test). Link only a test you opened.
 
 Show that draft and wait. If the user pastes another format and says not to rewrite, show these sections filled with the same words and write it only after they approve that form.
 
@@ -80,7 +93,7 @@ A reader who knows the product but not this code knows what has to be done, with
 - Don't restate what the tracker already renders — sub-tasks, links, status, assignee.
 - Don't put PR state or history in the body. It belongs in a comment.
 - Don't pad. Every sentence earns its place.
-- Don't cap acceptance criteria or validations at a fixed count.
+- Don't cap scenarios or validations at a fixed count.
 - Don't start `implement-spec`. The human runs it and passes the path or the issue.
 
 ## Red flags
@@ -100,4 +113,6 @@ Stop if you are about to:
 - Put Type or State on a local spec
 - Apply a triage label that was not on the shown draft
 - Apply a triage state other than `needs-triage`
-- Leave out Validations, or treat them as notes instead of acceptance criteria
+- Leave out Validations, or leave a scenario with no validation
+- Write acceptance criteria as bullets instead of Gherkin scenarios, or invent a `Then` you did not verify
+- Mark a scenario **Existing test** without a link you opened
