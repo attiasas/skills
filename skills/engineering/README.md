@@ -24,4 +24,4 @@ Reachable by you or by the agent when the task fits.
 - **[diagnosing-bugs](./diagnosing-bugs/SKILL.md)**: Find the cause of a hard bug or a performance regression with a failing loop before any theory, then report the fewest steps to replicate the bug and to validate the fix.
 - **[research](./research/SKILL.md)**: Investigate a question against primary sources and write the findings under `.agent-research/`.
 - **[tdd](./tdd/SKILL.md)**: Test-driven loop for features and bug fixes: one failing test through the public interface, the smallest passing change, then refactor while green.
-- **[to-hld](./to-hld/SKILL.md)**: Produce a high-level design (HLD) file using the seven-section engineering design-review template, plus an HTML slide deck of it (one slide per section) for the review.
+- **[to-hld](./to-hld/SKILL.md)**: Produce a high-level design (HLD) file using the ten-section engineering design-review template (Why, How, system diagram, sequence, schema, API, NFR, testing, risk, monitoring, plus open and ship questions), and an HTML slide deck of it (one slide per section) for the review.

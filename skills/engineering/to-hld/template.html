@@ -117,13 +117,17 @@
   </div>
   <ol class="agenda">
     <li><a href="#s01">Why</a></li>
-    <li><a href="#s02">System diagram</a></li>
-    <li><a href="#s03">Sequence</a></li>
-    <li><a href="#s04">Schema &amp; ERD</a></li>
-    <li><a href="#s05">API usage</a></li>
-    <li><a href="#s06">NFR &amp; sizing</a></li>
-    <li><a href="#s07">Testing</a></li>
+    <li><a href="#s02">How</a></li>
+    <li><a href="#s03">System diagram</a></li>
+    <li><a href="#s04">Sequence</a></li>
+    <li><a href="#s05">Schema &amp; ERD</a></li>
+    <li><a href="#s06">API usage</a></li>
+    <li><a href="#s07">NFR &amp; sizing</a></li>
+    <li><a href="#s08">Testing</a></li>
+    <li><a href="#s09">Risk</a></li>
+    <li><a href="#s10">Monitoring</a></li>
     <li><a href="#questions">Open questions</a></li>
+    <li><a href="#ship">Ship questions</a></li>
   </ol>
 </section>
 
@@ -134,7 +138,7 @@
   <div class="grid">
     <div class="card">
       <div class="metric">VALUE<small>UNIT</small></div>
-      <h4>GAP</h4>
+      <h4>G1 · GAP</h4>
       <p>WHAT THE FIGURE MEASURES.</p>
     </div>
   </div>
@@ -145,9 +149,28 @@
   <div class="callout"><b>Goal:</b> GOAL.</div>
 </section>
 
-<!-- 02 System diagram: same mermaid as the md, plus the classDefs below to mark new/changed and external boxes. -->
-<section class="slide" id="s02" data-title="System diagram">
-  <div class="slide-head"><span class="num">02</span><h2>System diagram</h2></div>
+<!-- 02 How: behaviour once it exists. No services, tables or endpoints. Each gap from 01 closed by a step. -->
+<section class="slide" id="s02" data-title="How">
+  <div class="slide-head"><span class="num">02</span><h2>How</h2></div>
+  <p class="lede">HOW THE FEATURE BEHAVES, ONE SENTENCE.</p>
+  <div class="two">
+    <pre class="mermaid">
+flowchart TD
+  start([INPUT]) --> a{FIRST CHECK}
+  a -->|yes| b[STEP 1: WHAT COMES OUT]
+  a -->|no| c[CAN'T HELP: UNCHANGED]
+    </pre>
+    <table>
+      <tr><th>Gap</th><th>Closed by</th></tr>
+      <tr><td>G1</td><td>STEP 1</td></tr>
+    </table>
+  </div>
+  <div class="callout warn"><b>When it can't help:</b> CONDITION AND RESULT.</div>
+</section>
+
+<!-- 03 System diagram: same mermaid as the md, plus the classDefs below to mark new/changed and external boxes. -->
+<section class="slide" id="s03" data-title="System diagram">
+  <div class="slide-head"><span class="num">03</span><h2>System diagram</h2></div>
   <p class="lede">WHAT THIS FEATURE TOUCHES, IN ONE SENTENCE.</p>
   <pre class="mermaid">
 flowchart LR
@@ -171,9 +194,9 @@ flowchart LR
   </div>
 </section>
 
-<!-- 03 Sequence -->
-<section class="slide" id="s03" data-title="Sequence">
-  <div class="slide-head"><span class="num">03</span><h2>Sequence</h2></div>
+<!-- 04 Sequence -->
+<section class="slide" id="s04" data-title="Sequence">
+  <div class="slide-head"><span class="num">04</span><h2>Sequence</h2></div>
   <p class="lede">Hot path: FLOW NAME.</p>
   <pre class="mermaid">
 sequenceDiagram
@@ -187,9 +210,9 @@ sequenceDiagram
   <div class="callout warn"><b>Short-circuit at step N:</b> CONDITION AND RESULT.</div>
 </section>
 
-<!-- 04 Schema & ERD: tag pill per table (new / reuse / alter); migration as numbered steps. -->
-<section class="slide" id="s04" data-title="Schema & ERD">
-  <div class="slide-head"><span class="num">04</span><h2>Schema &amp; ERD</h2></div>
+<!-- 05 Schema & ERD: tag pill per table (new / reuse / alter); migration as numbered steps. -->
+<section class="slide" id="s05" data-title="Schema & ERD">
+  <div class="slide-head"><span class="num">05</span><h2>Schema &amp; ERD</h2></div>
   <p class="lede">MIGRATION SURFACE, ONE SENTENCE (OR "NO DDL / NO BACKFILL").</p>
   <div class="two">
     <pre class="mermaid">
@@ -219,9 +242,9 @@ erDiagram
   </div>
 </section>
 
-<!-- 05 API usage: request and response side by side, real values. -->
-<section class="slide" id="s05" data-title="API usage">
-  <div class="slide-head"><span class="num">05</span><h2>API usage</h2></div>
+<!-- 06 API usage: request and response side by side, real values. -->
+<section class="slide" id="s06" data-title="API usage">
+  <div class="slide-head"><span class="num">06</span><h2>API usage</h2></div>
   <p class="lede"><span class="pill method">METHOD</span> <code>/path</code> · CHANGED VS TODAY'S CONTRACT.</p>
   <div class="two">
     <div class="pane"><header>Request</header><pre>{}</pre></div>
@@ -236,9 +259,9 @@ erDiagram
   </table>
 </section>
 
-<!-- 06 NFR & sizing: the 3-4 headline numbers as tiles, then the full table. -->
-<section class="slide" id="s06" data-title="NFR & sizing">
-  <div class="slide-head"><span class="num">06</span><h2>NFR &amp; sizing</h2></div>
+<!-- 07 NFR & sizing: the 3-4 headline numbers as tiles, then the full table. -->
+<section class="slide" id="s07" data-title="NFR & sizing">
+  <div class="slide-head"><span class="num">07</span><h2>NFR &amp; sizing</h2></div>
   <div class="grid">
     <div class="card"><div class="metric">VALUE<small>UNIT</small></div><p>WHAT IT MEASURES</p></div>
   </div>
@@ -253,9 +276,9 @@ erDiagram
   </table>
 </section>
 
-<!-- 07 Testing: one band row, then its cases. -->
-<section class="slide" id="s07" data-title="Testing">
-  <div class="slide-head"><span class="num">07</span><h2>Testing</h2></div>
+<!-- 08 Testing: one band row, then its cases. -->
+<section class="slide" id="s08" data-title="Testing">
+  <div class="slide-head"><span class="num">08</span><h2>Testing</h2></div>
   <table>
     <tr><th>Case</th><th>Defends</th><th>Pass criterion</th></tr>
     <tr class="band"><td colspan="3">Completeness</td></tr>
@@ -269,6 +292,25 @@ erDiagram
   </table>
 </section>
 
+<!-- 09 Risk: one row per risk; pill risk on each High. -->
+<section class="slide" id="s09" data-title="Risk">
+  <div class="slide-head"><span class="num">09</span><h2>Risk</h2></div>
+  <table>
+    <tr><th>ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th><th>Owner</th></tr>
+    <tr><td>R1</td><td>RISK</td><td>LOW/MEDIUM/HIGH</td><td><span class="pill risk">HIGH</span></td><td>MITIGATION</td><td>OWNER</td></tr>
+  </table>
+</section>
+
+<!-- 10 Monitoring: signal table, then the alert rules as a callout. -->
+<section class="slide" id="s10" data-title="Monitoring">
+  <div class="slide-head"><span class="num">10</span><h2>Monitoring</h2></div>
+  <table>
+    <tr><th>Signal</th><th>Healthy</th><th>Ticket (working hours)</th><th>Page (wake someone)</th></tr>
+    <tr><td>SIGNAL</td><td>HEALTHY</td><td>&gt; X for N min</td><td>&gt; Y for M min</td></tr>
+  </table>
+  <div class="callout"><b>Alert rules:</b> page on symptoms only; every threshold has a window; owner and runbook: OWNER, RUNBOOK; reviewed PRUNE DATE.</div>
+</section>
+
 <!-- Open questions: one card per decision; the recommended option gets class "rec". -->
 <section class="slide" id="questions" data-title="Open questions">
   <div class="slide-head"><span class="num">?</span><h2>Open questions</h2></div>
@@ -280,6 +322,17 @@ erDiagram
       <div class="opt"><b>B</b>: OPTION</div>
     </div>
     <span class="who">Needed from: ROLE</span>
+  </div>
+</section>
+
+<!-- Ship questions: one card per group. -->
+<section class="slide" id="ship" data-title="Ship questions">
+  <div class="slide-head"><span class="num">?</span><h2>Ship questions</h2></div>
+  <div class="grid">
+    <div class="card"><h4>Interface changes</h4><p>CONTRACTS, COMPATIBILITY, OLD CLIENTS, WHO IS TOLD.</p></div>
+    <div class="card"><h4>Scale</h4><p>WHAT BREAKS FIRST AT 10x, COST VS LOAD, QUEUE/SHED/REJECT.</p></div>
+    <div class="card"><h4>Error recovery</h4><p>IN-FLIGHT WORK, IDEMPOTENT RETRIES, REPAIR.</p></div>
+    <div class="card"><h4>Rollout and recovery</h4><p>FLAG, FAIL-SAFE, ROLLBACK, FIRST THREE STEPS AT 3 A.M.</p></div>
   </div>
 </section>
 
