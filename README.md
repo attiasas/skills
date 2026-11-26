@@ -49,6 +49,7 @@ Destinations:
 
 - `~/.cursor/skills` for Cursor
 - `~/.agents/skills` for other Agent Skills harnesses
+- `~/.claude/skills` for Claude Code
 
 Each entry is a symlink into this repo. Re-run the script after adding, renaming, or removing a skill. The script will not replace a real directory that is already at the destination.
 

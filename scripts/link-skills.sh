@@ -8,12 +8,13 @@ set -euo pipefail
 # Destinations:
 #   ~/.cursor/skills   Cursor
 #   ~/.agents/skills   other Agent Skills harnesses
+#   ~/.claude/skills   Claude Code
 #
 # Refuses to replace a real directory. Remove or move that directory yourself
 # if you want the symlink.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-DESTS=("$HOME/.cursor/skills" "$HOME/.agents/skills")
+DESTS=("$HOME/.cursor/skills" "$HOME/.agents/skills" "$HOME/.claude/skills")
 
 names=()
 srcs=()
